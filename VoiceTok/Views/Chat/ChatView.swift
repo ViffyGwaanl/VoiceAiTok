@@ -164,7 +164,7 @@ struct ChatView: View {
                     .font(.title2)
                     .foregroundStyle(
                         inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                        ? .secondary : .orange
+                        ? Color.secondary : Color.orange
                     )
             }
             .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

@@ -113,8 +113,11 @@ struct PlayerView: View {
     // MARK: - Video Player
     private var videoPlayerView: some View {
         ZStack {
-            if let player = viewModel.player.player {
-                VideoPlayer(player: player)
+            #if canImport(MobileVLCKit)
+            VLCVideoRepresentable(playerService: viewModel.player)
+            #else
+            if let avPlayer = viewModel.player.player {
+                VideoPlayer(player: avPlayer)
                     .disabled(true) // We use custom controls
             } else {
                 Rectangle()
@@ -124,6 +127,7 @@ struct PlayerView: View {
                             .tint(.white)
                     }
             }
+            #endif
         }
         .aspectRatio(16/9, contentMode: .fit)
         .clipShape(RoundedRectangle(cornerRadius: 0))

@@ -60,30 +60,29 @@ final class TranscriptionService: ObservableObject {
 
         do {
             let options = DecodingOptions(
-                language: config.language,
                 task: .transcribe,
+                language: config.language,
                 wordTimestamps: config.wordTimestamps
             )
 
-            // Progress callback: estimate based on last processed timestamp vs total duration
+            // Progress callback: each window is ~30s; use windowId as proxy for progress
+            let windowDuration = 30.0
             let callback: TranscriptionCallback = { [weak self] progress in
                 Task { @MainActor [weak self] in
                     guard let self, audioDuration > 0 else { return }
-                    let currentTime = Double(progress.timings.fullPipeline)
-                    // Use the latest segment's end time for progress
-                    if let lastSegment = progress.segments.last {
-                        let pct = min(Double(lastSegment.end) / audioDuration, 0.99)
-                        self.state = .transcribing(progress: pct)
-                    }
+                    let processed = Double(progress.windowId + 1) * windowDuration
+                    let pct = min(processed / audioDuration, 0.99)
+                    self.state = .transcribing(progress: pct)
                 }
                 return nil // nil = continue transcribing
             }
 
-            guard let results = try await whisperKit.transcribe(
+            let results = try await whisperKit.transcribe(
                 audioPath: audioURL.path,
                 decodeOptions: options,
                 callback: callback
-            ) else {
+            )
+            guard !results.isEmpty else {
                 throw TranscriptionError.transcriptionFailed
             }
 

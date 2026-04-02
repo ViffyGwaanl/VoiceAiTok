@@ -32,3 +32,10 @@ Pods/
 # Secrets - never commit API keys
 *.env
 .env.local
+
+# Build artifacts
+VoiceTok.xcworkspace/xcuserdata/
+VoiceTok.xcodeproj/xcuserdata/
+DerivedData/
+*.xccheckout
+*.moved-aside

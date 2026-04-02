@@ -178,7 +178,7 @@ final class VLCPlayerService: NSObject, ObservableObject, MediaPlayerProtocol {
         mediaPlayer.media = media
 
         // Parse media for duration
-        media.parse(withOptions: VLCMediaParsingOptions(VLCMediaParseLocal))
+        _ = media.parse(options: VLCMediaParsingOptions(rawValue: 0x02)) // VLCMediaFetchLocal
         try? await Task.sleep(nanoseconds: 500_000_000)
         duration = TimeInterval(media.length.intValue) / 1000.0
     }
@@ -231,6 +231,24 @@ extension VLCPlayerService: VLCMediaPlayerDelegate {
             default:         break
             }
         }
+    }
+}
+
+// MARK: - SwiftUI bridge for VLC video rendering
+import SwiftUI
+
+struct VLCVideoRepresentable: UIViewRepresentable {
+    let playerService: VLCPlayerService
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.backgroundColor = .black
+        playerService.setDrawable(view)
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        playerService.setDrawable(uiView)
     }
 }
 #endif
