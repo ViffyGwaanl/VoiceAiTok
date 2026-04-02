@@ -46,7 +46,7 @@ struct PlayerView: View {
                     // Portrait: player top, transcript bottom
                     VStack(spacing: 0) {
                         playerSection
-                            .frame(height: (viewModel.mediaItem ?? mediaItem).mediaType == .video ? 280 : 200)
+                            .frame(height: 280)
                         Divider()
                         transcriptPanel
                     }

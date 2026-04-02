@@ -79,6 +79,11 @@ struct ChatView: View {
                         .padding(.vertical, 4)
                     }
 
+                    // Show setup prompt if no provider configured
+                    if !chatService.hasConfiguredProvider {
+                        noProviderPrompt
+                    }
+
                     ForEach(chatService.messages.filter { $0.role != .system }) { message in
                         ChatBubble(
                             message: message,
@@ -89,7 +94,8 @@ struct ChatView: View {
                         .id(message.id)
                     }
 
-                    if chatService.isGenerating {
+                    // Only show typing dots before the first chunk arrives
+                    if chatService.isGenerating && chatService.currentStreamText.isEmpty {
                         TypingIndicator()
                             .id("typing")
                     }
@@ -144,6 +150,37 @@ struct ChatView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
+        }
+        .padding()
+        .frame(maxWidth: .infinity)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    // MARK: - No Provider Prompt
+
+    private var noProviderPrompt: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "exclamationmark.triangle")
+                .font(.title)
+                .foregroundStyle(.orange)
+            Text("AI Provider Not Configured")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+            Text("Go to Settings → AI Providers to add your API key before chatting.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Button(action: { showSettings = true }) {
+                Label("Open Settings", systemImage: "gearshape")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(.orange.opacity(0.15))
+                    .foregroundStyle(.orange)
+                    .clipShape(Capsule())
+            }
         }
         .padding()
         .frame(maxWidth: .infinity)

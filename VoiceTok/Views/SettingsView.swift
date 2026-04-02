@@ -12,6 +12,8 @@ struct SettingsView: View {
     @AppStorage("auto_transcribe") private var autoTranscribe = false
     @AppStorage("word_timestamps") private var wordTimestamps = true
     @AppStorage("transcript_language") private var transcriptLanguage = ""
+    @State private var selectedProvider: TranscriptionProvider = .whisperKit
+    @State private var openAITranscriptionKey: String = ""
 
     var body: some View {
         NavigationStack {
@@ -36,21 +38,65 @@ struct SettingsView: View {
                     Text("Configure AI providers for transcript-based conversations. Supports Claude, OpenAI, Ollama, and custom OpenAI-compatible endpoints.")
                 }
 
-                // MARK: - Whisper Transcription
+                // MARK: - Transcription
                 Section {
-                    NavigationLink {
-                        ModelManagementView()
-                    } label: {
+                    Picker("Provider", selection: $selectedProvider) {
+                        ForEach(TranscriptionProvider.allCases, id: \.self) { p in
+                            Text(p.displayName).tag(p)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                } header: {
+                    Label("Transcription", systemImage: "waveform")
+                } footer: {
+                    Text(selectedProvider.description)
+                }
+
+                // WhisperKit-specific settings
+                if selectedProvider == .whisperKit {
+                    Section("WhisperKit Model") {
+                        NavigationLink {
+                            ModelManagementView()
+                        } label: {
+                            HStack {
+                                Text("Model")
+                                Spacer()
+                                Text(whisperModel)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+
+                        Toggle("Word-level Timestamps", isOn: $wordTimestamps)
+                    }
+                }
+
+                // Apple Speech info
+                if selectedProvider == .appleSpeech {
+                    Section("Apple Speech") {
                         HStack {
-                            Text("Model")
-                            Spacer()
-                            Text(whisperModel)
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                            Text("No download required — uses iOS built-in speech recognition.")
+                                .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
                     }
+                }
 
-                    Toggle("Word-level Timestamps", isOn: $wordTimestamps)
+                // OpenAI API key for transcription
+                if selectedProvider == .openAIAPI {
+                    Section("OpenAI Whisper API") {
+                        SecureField("API Key (sk-...)", text: $openAITranscriptionKey)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                        Text("Used for cloud-based audio transcription via OpenAI Whisper API.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
 
+                // Shared transcription settings
+                Section("Transcription Options") {
                     Toggle("Auto-transcribe on Import", isOn: $autoTranscribe)
 
                     Picker("Language", selection: $transcriptLanguage) {
@@ -59,11 +105,6 @@ struct SettingsView: View {
                             Text(lang.name).tag(lang.code)
                         }
                     }
-
-                } header: {
-                    Label("WhisperKit Transcription", systemImage: "waveform")
-                } footer: {
-                    Text("Manage WhisperKit models: download, switch, or delete models for on-device transcription.")
                 }
 
                 // MARK: - Playback
@@ -125,14 +166,27 @@ struct SettingsView: View {
                     .fontWeight(.semibold)
                 }
             }
+            .onAppear { loadSettings() }
         }
     }
 
     private func applySettings() {
-        // Apply transcription settings
+        appState.transcriptionService.config.provider = selectedProvider
         appState.transcriptionService.config.modelName = whisperModel
         appState.transcriptionService.config.wordTimestamps = wordTimestamps
         appState.transcriptionService.config.language = transcriptLanguage.isEmpty ? nil : transcriptLanguage
+        appState.transcriptionService.config.openAIAPIKey = openAITranscriptionKey.isEmpty ? nil : openAITranscriptionKey
+    }
+
+    private func loadSettings() {
+        selectedProvider = appState.transcriptionService.config.provider
+        openAITranscriptionKey = appState.transcriptionService.config.openAIAPIKey ?? ""
+        // Pre-fill from existing OpenAI AI provider if transcription key is empty
+        if openAITranscriptionKey.isEmpty,
+           let openAI = providerService.providers.first(where: { $0.type == .openai }) {
+            let key = providerService.apiKey(for: openAI)
+            if !key.isEmpty { openAITranscriptionKey = key }
+        }
     }
 
     // MARK: - Languages

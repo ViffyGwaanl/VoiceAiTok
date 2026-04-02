@@ -47,6 +47,16 @@ final class ChatService: ObservableObject {
         )
     }
 
+    /// Whether an active provider with API key is configured
+    var hasConfiguredProvider: Bool {
+        guard let service = providerService, let provider = service.activeProvider else {
+            return false
+        }
+        // Ollama doesn't need an API key
+        if provider.type == .ollama { return true }
+        return !service.apiKey(for: provider).isEmpty
+    }
+
     // MARK: - Set Context
     func setTranscript(_ transcript: Transcript) {
         self.transcript = transcript
@@ -66,7 +76,7 @@ final class ChatService: ObservableObject {
             context += "Language: \(lang)\n\n"
         }
 
-        var tokenCount = context.count / 4 // rough estimate: ~4 chars per token
+        var tokenCount = context.count / 4
         var truncated = false
 
         for (index, segment) in transcript.segments.enumerated() {
@@ -112,7 +122,6 @@ final class ChatService: ObservableObject {
 
     /// Regenerate the last AI response
     func regenerate() async {
-        // Remove last assistant message
         if let lastAssistant = messages.last, lastAssistant.role == .assistant {
             messages.removeLast()
         }
@@ -123,6 +132,18 @@ final class ChatService: ObservableObject {
         isGenerating = true
         currentStreamText = ""
 
+        // Pre-flight check: is provider configured?
+        let cfg = effectiveConfig
+        if cfg.apiKey.isEmpty && cfg.apiProvider != .ollama {
+            let errMsg = ChatMessage(
+                role: .assistant,
+                content: String(localized: "⚠️ No API key configured. Go to Settings → AI Providers to add your key.")
+            )
+            messages.append(errMsg)
+            isGenerating = false
+            return
+        }
+
         let placeholderId = UUID()
         let placeholder = ChatMessage(id: placeholderId, role: .assistant, content: "")
         messages.append(placeholder)
@@ -131,7 +152,9 @@ final class ChatService: ObservableObject {
             guard let self else { return }
             do {
                 try Task.checkCancellation()
-                try await self.streamLLM(messages: self.messages) { [weak self] delta in
+                // Build messages WITHOUT the empty placeholder for the API call
+                let apiMessages = self.messages.filter { $0.id != placeholderId }
+                try await self.streamLLM(messages: apiMessages) { [weak self] delta in
                     guard let self else { return }
                     try Task.checkCancellation()
                     self.currentStreamText += delta
@@ -148,16 +171,15 @@ final class ChatService: ObservableObject {
             } catch {
                 // Streaming failed — try non-streaming fallback
                 do {
-                    let response = try await self.callLLM(messages: self.messages.filter { $0.id != placeholderId })
+                    let apiMessages = self.messages.filter { $0.id != placeholderId }
+                    let response = try await self.callLLM(messages: apiMessages)
                     if let idx = self.messages.lastIndex(where: { $0.id == placeholderId }) {
                         self.messages[idx] = ChatMessage(id: placeholderId, role: .assistant, content: response)
                     }
                 } catch {
+                    let errorText = Self.friendlyError(error)
                     if let idx = self.messages.lastIndex(where: { $0.id == placeholderId }) {
-                        self.messages[idx] = ChatMessage(
-                            id: placeholderId, role: .assistant,
-                            content: String(format: String(localized: "Sorry, I encountered an error: %@"), error.localizedDescription)
-                        )
+                        self.messages[idx] = ChatMessage(id: placeholderId, role: .assistant, content: errorText)
                     }
                 }
             }
@@ -165,6 +187,27 @@ final class ChatService: ObservableObject {
         }
 
         await streamingTask?.value
+    }
+
+    /// Map errors to user-friendly messages
+    private static func friendlyError(_ error: Error) -> String {
+        let msg = error.localizedDescription.lowercased()
+        if msg.contains("401") || msg.contains("unauthorized") || msg.contains("auth") {
+            return String(localized: "⚠️ Authentication failed — please verify your API key in Settings → AI Providers.")
+        }
+        if msg.contains("429") || msg.contains("rate limit") {
+            return String(localized: "⚠️ Rate limit reached. Please wait a moment and try again.")
+        }
+        if msg.contains("404") || msg.contains("not found") {
+            return String(localized: "⚠️ Model not found. Check the model name in Settings → AI Providers.")
+        }
+        if msg.contains("timeout") {
+            return String(localized: "⚠️ Request timed out. Check your network connection.")
+        }
+        if msg.contains("network") || msg.contains("offline") || msg.contains("internet") {
+            return String(localized: "⚠️ Network error. Check your internet connection.")
+        }
+        return "⚠️ \(error.localizedDescription)"
     }
 
     // MARK: - Quick Actions
@@ -212,21 +255,19 @@ final class ChatService: ObservableObject {
 
     // MARK: - Claude API
     private func callClaude(messages: [ChatMessage], cfg: Config) async throws -> String {
-        guard !cfg.apiKey.isEmpty else {
-            throw ChatError.missingAPIKey
-        }
+        guard !cfg.apiKey.isEmpty else { throw ChatError.missingAPIKey }
 
-        let url = URL(string: "https://api.anthropic.com/v1/messages")!
+        let base = cfg.baseURL.isEmpty ? "https://api.anthropic.com" : cfg.baseURL
+        let url = URL(string: "\(base)/v1/messages")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(cfg.apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
 
-        // Separate system message from conversation
         let systemContent = messages.first(where: { $0.role == .system })?.content ?? cfg.systemPrompt
         let conversationMessages = messages
-            .filter { $0.role != .system }
+            .filter { $0.role != .system && !$0.content.isEmpty }
             .map { ["role": $0.role.rawValue, "content": $0.content] }
 
         let body: [String: Any] = [
@@ -235,29 +276,19 @@ final class ChatService: ObservableObject {
             "system": systemContent,
             "messages": conversationMessages
         ]
-
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await URLSession.shared.data(for: request)
-
-        guard let httpResponse = response as? HTTPURLResponse,
-              200..<300 ~= httpResponse.statusCode else {
-            let errorBody = String(data: data, encoding: .utf8) ?? "Unknown error"
-            throw ChatError.apiError("Claude API error: \(errorBody)")
-        }
+        try Self.checkHTTPResponse(response, data: data, provider: "Claude")
 
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let content = json?["content"] as? [[String: Any]]
-        let text = content?.first?["text"] as? String
-
-        return text ?? "No response generated."
+        return content?.first?["text"] as? String ?? "No response generated."
     }
 
     // MARK: - OpenAI API
     private func callOpenAI(messages: [ChatMessage], cfg: Config) async throws -> String {
-        guard !cfg.apiKey.isEmpty else {
-            throw ChatError.missingAPIKey
-        }
+        guard !cfg.apiKey.isEmpty else { throw ChatError.missingAPIKey }
 
         let base = cfg.baseURL.isEmpty ? "https://api.openai.com" : cfg.baseURL
         let url = URL(string: "\(base)/v1/chat/completions")!
@@ -266,7 +297,9 @@ final class ChatService: ObservableObject {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("Bearer \(cfg.apiKey)", forHTTPHeaderField: "Authorization")
 
-        let apiMessages = messages.map { ["role": $0.role.rawValue, "content": $0.content] }
+        let apiMessages = messages
+            .filter { !$0.content.isEmpty }
+            .map { ["role": $0.role.rawValue, "content": $0.content] }
 
         let body: [String: Any] = [
             "model": cfg.modelName,
@@ -274,38 +307,41 @@ final class ChatService: ObservableObject {
             "temperature": cfg.temperature,
             "messages": apiMessages
         ]
-
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try Self.checkHTTPResponse(response, data: data, provider: "OpenAI")
+
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let choices = json?["choices"] as? [[String: Any]]
         let message = choices?.first?["message"] as? [String: Any]
-
         return message?["content"] as? String ?? "No response generated."
     }
 
     // MARK: - Ollama (Local)
     private func callOllama(messages: [ChatMessage], cfg: Config) async throws -> String {
-        let url = URL(string: "\(cfg.baseURL.isEmpty ? "http://localhost:11434" : cfg.baseURL)/api/chat")!
+        let base = cfg.baseURL.isEmpty ? "http://localhost:11434" : cfg.baseURL
+        let url = URL(string: "\(base)/api/chat")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let apiMessages = messages.map { ["role": $0.role.rawValue, "content": $0.content] }
+        let apiMessages = messages
+            .filter { !$0.content.isEmpty }
+            .map { ["role": $0.role.rawValue, "content": $0.content] }
 
         let body: [String: Any] = [
             "model": cfg.modelName.isEmpty ? "llama3.2" : cfg.modelName,
             "messages": apiMessages,
             "stream": false
         ]
-
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        try Self.checkHTTPResponse(response, data: data, provider: "Ollama")
+
         let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
         let message = json?["message"] as? [String: Any]
-
         return message?["content"] as? String ?? "No response generated."
     }
 
@@ -336,8 +372,14 @@ final class ChatService: ObservableObject {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (bytes, response) = try await URLSession.shared.bytes(for: request)
-        guard let httpResponse = response as? HTTPURLResponse, 200..<300 ~= httpResponse.statusCode else {
-            throw ChatError.apiError("Claude streaming error: HTTP \((response as? HTTPURLResponse)?.statusCode ?? 0)")
+        guard let http = response as? HTTPURLResponse else {
+            throw ChatError.apiError("Claude: invalid response")
+        }
+        guard 200..<300 ~= http.statusCode else {
+            // Read the error body from the stream
+            var errorBody = ""
+            for try await line in bytes.lines { errorBody += line; if errorBody.count > 500 { break } }
+            throw ChatError.apiError("Claude HTTP \(http.statusCode): \(Self.extractAPIError(errorBody))")
         }
 
         for try await line in bytes.lines {
@@ -347,7 +389,6 @@ final class ChatService: ObservableObject {
                   let data = jsonStr.data(using: .utf8),
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
 
-            // Claude SSE: content_block_delta events contain {"delta": {"text": "..."}}
             if let delta = json["delta"] as? [String: Any],
                let text = delta["text"] as? String {
                 try await MainActor.run { try onDelta(text) }
@@ -379,7 +420,15 @@ final class ChatService: ObservableObject {
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (bytes, _) = try await URLSession.shared.bytes(for: request)
+        let (bytes, response) = try await URLSession.shared.bytes(for: request)
+        guard let http = response as? HTTPURLResponse else {
+            throw ChatError.apiError("OpenAI: invalid response")
+        }
+        guard 200..<300 ~= http.statusCode else {
+            var errorBody = ""
+            for try await line in bytes.lines { errorBody += line; if errorBody.count > 500 { break } }
+            throw ChatError.apiError("OpenAI HTTP \(http.statusCode): \(Self.extractAPIError(errorBody))")
+        }
 
         for try await line in bytes.lines {
             guard line.hasPrefix("data: ") else { continue }
@@ -388,7 +437,6 @@ final class ChatService: ObservableObject {
                   let data = jsonStr.data(using: .utf8),
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
 
-            // OpenAI SSE: choices[0].delta.content
             if let choices = json["choices"] as? [[String: Any]],
                let delta = choices.first?["delta"] as? [String: Any],
                let content = delta["content"] as? String {
@@ -399,7 +447,8 @@ final class ChatService: ObservableObject {
 
     // MARK: - Streaming: Ollama
     private func streamOllama(messages: [ChatMessage], cfg: Config, onDelta: @escaping (String) throws -> Void) async throws {
-        let url = URL(string: "\(cfg.baseURL.isEmpty ? "http://localhost:11434" : cfg.baseURL)/api/chat")!
+        let base = cfg.baseURL.isEmpty ? "http://localhost:11434" : cfg.baseURL
+        let url = URL(string: "\(base)/api/chat")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -415,14 +464,18 @@ final class ChatService: ObservableObject {
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (bytes, _) = try await URLSession.shared.bytes(for: request)
+        let (bytes, response) = try await URLSession.shared.bytes(for: request)
+        if let http = response as? HTTPURLResponse, !(200..<300 ~= http.statusCode) {
+            var errorBody = ""
+            for try await line in bytes.lines { errorBody += line; if errorBody.count > 500 { break } }
+            throw ChatError.apiError("Ollama HTTP \(http.statusCode): \(Self.extractAPIError(errorBody))")
+        }
 
         for try await line in bytes.lines {
             guard !line.isEmpty,
                   let data = line.data(using: .utf8),
                   let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { continue }
 
-            // Ollama streaming: each line is a JSON with message.content
             if let message = json["message"] as? [String: Any],
                let content = message["content"] as? String {
                 try await MainActor.run { try onDelta(content) }
@@ -438,6 +491,43 @@ final class ChatService: ObservableObject {
             messages = []
         }
     }
+
+    // MARK: - HTTP Helpers
+
+    /// Check non-streaming HTTP response and throw with meaningful error
+    private static func checkHTTPResponse(_ response: URLResponse, data: Data, provider: String) throws {
+        guard let http = response as? HTTPURLResponse else {
+            throw ChatError.apiError("\(provider): invalid response")
+        }
+        guard 200..<300 ~= http.statusCode else {
+            let body = String(data: data, encoding: .utf8) ?? ""
+            throw ChatError.apiError("\(provider) HTTP \(http.statusCode): \(extractAPIError(body))")
+        }
+    }
+
+    /// Extract human-readable error from JSON API response body
+    private static func extractAPIError(_ body: String) -> String {
+        if let data = body.data(using: .utf8),
+           let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            // OpenAI/Ollama: { "error": { "message": "..." } }
+            if let errorObj = json["error"] as? [String: Any],
+               let msg = errorObj["message"] as? String {
+                return msg
+            }
+            // Claude: { "error": { "message": "..." } }
+            if let errorObj = json["error"] as? [String: Any],
+               let msg = errorObj["message"] as? String {
+                return msg
+            }
+            // Simple: { "error": "..." }
+            if let msg = json["error"] as? String {
+                return msg
+            }
+        }
+        // Truncate raw body for display
+        let trimmed = body.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? "Unknown error" : String(trimmed.prefix(200))
+    }
 }
 
 // MARK: - Errors
@@ -447,7 +537,7 @@ enum ChatError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .missingAPIKey: return String(localized: "API key not configured. Go to Settings to add your key.")
+        case .missingAPIKey: return String(localized: "API key not configured. Go to Settings → AI Providers to add your key.")
         case .apiError(let msg): return msg
         }
     }
