@@ -14,17 +14,18 @@ final class AppState: ObservableObject {
     let transcriptionService = TranscriptionService()
     let chatService = ChatService()
     let mediaLibraryService = MediaLibraryService()
+    let aiProviderService = AIProviderService()
 
     // MARK: - Flags
     @Published var isTranscribing = false
     @Published var whisperKitReady = false
 
     init() {
-        // Load API key from Keychain
-        let savedKey = KeychainService.load(key: "api_key")
-        if !savedKey.isEmpty {
-            chatService.config.apiKey = savedKey
-        }
+        // Wire ChatService to AIProviderService
+        chatService.providerService = aiProviderService
+
+        // Migrate legacy single-provider settings if present
+        aiProviderService.migrateFromLegacyIfNeeded()
 
         Task {
             await prepareWhisperKit()

@@ -7,10 +7,6 @@ struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @Environment(\.dismiss) var dismiss
 
-    @AppStorage("api_provider") private var apiProvider = "claude"
-    @State private var apiKey = ""  // Loaded from Keychain, not UserDefaults
-    @AppStorage("api_base_url") private var apiBaseURL = ""
-    @AppStorage("chat_model") private var chatModel = "claude-sonnet-4-20250514"
     @AppStorage("whisper_model") private var whisperModel = "base"
     @AppStorage("auto_transcribe") private var autoTranscribe = false
     @AppStorage("word_timestamps") private var wordTimestamps = true
@@ -21,30 +17,22 @@ struct SettingsView: View {
             Form {
                 // MARK: - AI Chat API
                 Section {
-                    Picker("Provider", selection: $apiProvider) {
-                        ForEach(ChatService.APIProvider.allCases, id: \.rawValue) { provider in
-                            Text(provider.rawValue).tag(provider.rawValue)
+                    NavigationLink {
+                        AIProviderListView()
+                    } label: {
+                        HStack {
+                            Text("AI Providers")
+                            Spacer()
+                            if let active = appState.aiProviderService.activeProvider {
+                                Text(active.name)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
-
-                    SecureField("API Key", text: $apiKey)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-
-                    if apiProvider == "openai" || apiProvider == "ollama" {
-                        TextField("Base URL (optional)", text: $apiBaseURL)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                    }
-
-                    TextField("Model Name", text: $chatModel)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-
                 } header: {
-                    Label("AI Chat API", systemImage: "brain")
+                    Label("AI Chat", systemImage: "brain")
                 } footer: {
-                    Text("Configure the LLM provider for transcript-based AI conversations. Claude, OpenAI, or local Ollama are supported.")
+                    Text("Configure AI providers for transcript-based conversations. Supports Claude, OpenAI, Ollama, and custom OpenAI-compatible endpoints.")
                 }
 
                 // MARK: - Whisper Transcription
@@ -136,24 +124,10 @@ struct SettingsView: View {
                     .fontWeight(.semibold)
                 }
             }
-            .onAppear {
-                apiKey = KeychainService.load(key: "api_key")
-            }
         }
     }
 
     private func applySettings() {
-        // Save API key securely to Keychain
-        KeychainService.save(key: "api_key", value: apiKey)
-
-        // Apply chat settings
-        if let provider = ChatService.APIProvider(rawValue: apiProvider) {
-            appState.chatService.config.apiProvider = provider
-        }
-        appState.chatService.config.apiKey = apiKey
-        appState.chatService.config.baseURL = apiBaseURL
-        appState.chatService.config.modelName = chatModel
-
         // Apply transcription settings
         appState.transcriptionService.config.modelName = whisperModel
         appState.transcriptionService.config.wordTimestamps = wordTimestamps

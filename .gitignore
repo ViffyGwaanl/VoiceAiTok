@@ -39,3 +39,4 @@ VoiceTok.xcodeproj/xcuserdata/
 DerivedData/
 *.xccheckout
 *.moved-aside
+build/

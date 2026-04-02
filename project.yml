@@ -42,7 +42,7 @@ targets:
         CFBundleIconName: AppIcon
         CFBundleDisplayName: VoiceTok
         CFBundleShortVersionString: "1.0.0"
-        CFBundleVersion: "1"
+        CFBundleVersion: "2"
         LSRequiresIPhoneOS: true
         UILaunchScreen:
           UIColorName: AccentColor
@@ -76,6 +76,8 @@ targets:
               - public.mp3
               - com.apple.m4a-audio
               - public.aiff-audio
+        LSSupportsOpeningDocumentsInPlace: true
+        ITSAppUsesNonExemptEncryption: false
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
     dependencies:

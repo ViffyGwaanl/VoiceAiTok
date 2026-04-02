@@ -12,30 +12,37 @@ final class ChatService: ObservableObject {
     @Published var currentStreamText = ""
 
     // MARK: - Configuration
+
+    /// Legacy config — now reads from AIProviderService.activeProvider
     struct Config {
-        var apiProvider: APIProvider = .claude
+        var apiProvider: AIProviderType = .claude
         var apiKey: String = ""
         var baseURL: String = ""
         var modelName: String = "claude-sonnet-4-20250514"
         var maxTokens: Int = 2048
         var temperature: Double = 0.7
-        var systemPrompt: String = """
-        You are VoiceTok AI, an intelligent assistant that helps users understand \
-        and interact with media content through its transcript. You can answer \
-        questions about the content, summarize sections, explain concepts mentioned, \
-        identify key topics, and provide analysis. Always reference specific parts \
-        of the transcript when relevant. Be concise but thorough.
-        """
-    }
-
-    enum APIProvider: String, CaseIterable {
-        case claude = "Claude (Anthropic)"
-        case openai = "OpenAI"
-        case ollama = "Ollama (Local)"
+        var systemPrompt: String = AIProvider.defaultSystemPrompt
     }
 
     var config = Config()
+    weak var providerService: AIProviderService?
     private var transcript: Transcript?
+
+    /// Resolve effective config from active provider
+    private var effectiveConfig: Config {
+        guard let service = providerService, let provider = service.activeProvider else {
+            return config
+        }
+        return Config(
+            apiProvider: provider.type,
+            apiKey: service.apiKey(for: provider),
+            baseURL: provider.baseURL,
+            modelName: provider.modelName,
+            maxTokens: provider.maxTokens,
+            temperature: provider.temperature,
+            systemPrompt: provider.systemPrompt
+        )
+    }
 
     // MARK: - Set Context
     func setTranscript(_ transcript: Transcript) {
@@ -49,7 +56,7 @@ final class ChatService: ObservableObject {
     }
 
     private func buildSystemContext(_ transcript: Transcript, maxTokenEstimate: Int = 80_000) -> String {
-        var context = config.systemPrompt + "\n\n"
+        var context = effectiveConfig.systemPrompt + "\n\n"
         context += "=== MEDIA TRANSCRIPT ===\n"
 
         if let lang = transcript.language {
@@ -151,31 +158,33 @@ final class ChatService: ObservableObject {
 
     // MARK: - Streaming LLM Call
     private func streamLLM(messages: [ChatMessage], onDelta: @escaping (String) -> Void) async throws {
-        switch config.apiProvider {
+        let cfg = effectiveConfig
+        switch cfg.apiProvider {
         case .claude:
-            try await streamClaude(messages: messages, onDelta: onDelta)
-        case .openai:
-            try await streamOpenAI(messages: messages, onDelta: onDelta)
+            try await streamClaude(messages: messages, cfg: cfg, onDelta: onDelta)
+        case .openai, .openaiCompatible:
+            try await streamOpenAI(messages: messages, cfg: cfg, onDelta: onDelta)
         case .ollama:
-            try await streamOllama(messages: messages, onDelta: onDelta)
+            try await streamOllama(messages: messages, cfg: cfg, onDelta: onDelta)
         }
     }
 
     // MARK: - LLM API Call (non-streaming fallback)
     private func callLLM(messages: [ChatMessage]) async throws -> String {
-        switch config.apiProvider {
+        let cfg = effectiveConfig
+        switch cfg.apiProvider {
         case .claude:
-            return try await callClaude(messages: messages)
-        case .openai:
-            return try await callOpenAI(messages: messages)
+            return try await callClaude(messages: messages, cfg: cfg)
+        case .openai, .openaiCompatible:
+            return try await callOpenAI(messages: messages, cfg: cfg)
         case .ollama:
-            return try await callOllama(messages: messages)
+            return try await callOllama(messages: messages, cfg: cfg)
         }
     }
 
     // MARK: - Claude API
-    private func callClaude(messages: [ChatMessage]) async throws -> String {
-        guard !config.apiKey.isEmpty else {
+    private func callClaude(messages: [ChatMessage], cfg: Config) async throws -> String {
+        guard !cfg.apiKey.isEmpty else {
             throw ChatError.missingAPIKey
         }
 
@@ -183,18 +192,18 @@ final class ChatService: ObservableObject {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(config.apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue(cfg.apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
 
         // Separate system message from conversation
-        let systemContent = messages.first(where: { $0.role == .system })?.content ?? config.systemPrompt
+        let systemContent = messages.first(where: { $0.role == .system })?.content ?? cfg.systemPrompt
         let conversationMessages = messages
             .filter { $0.role != .system }
             .map { ["role": $0.role.rawValue, "content": $0.content] }
 
         let body: [String: Any] = [
-            "model": config.modelName,
-            "max_tokens": config.maxTokens,
+            "model": cfg.modelName,
+            "max_tokens": cfg.maxTokens,
             "system": systemContent,
             "messages": conversationMessages
         ]
@@ -217,23 +226,24 @@ final class ChatService: ObservableObject {
     }
 
     // MARK: - OpenAI API
-    private func callOpenAI(messages: [ChatMessage]) async throws -> String {
-        guard !config.apiKey.isEmpty else {
+    private func callOpenAI(messages: [ChatMessage], cfg: Config) async throws -> String {
+        guard !cfg.apiKey.isEmpty else {
             throw ChatError.missingAPIKey
         }
 
-        let url = URL(string: "\(config.baseURL.isEmpty ? "https://api.openai.com" : config.baseURL)/v1/chat/completions")!
+        let base = cfg.baseURL.isEmpty ? "https://api.openai.com" : cfg.baseURL
+        let url = URL(string: "\(base)/v1/chat/completions")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(config.apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(cfg.apiKey)", forHTTPHeaderField: "Authorization")
 
         let apiMessages = messages.map { ["role": $0.role.rawValue, "content": $0.content] }
 
         let body: [String: Any] = [
-            "model": config.modelName,
-            "max_tokens": config.maxTokens,
-            "temperature": config.temperature,
+            "model": cfg.modelName,
+            "max_tokens": cfg.maxTokens,
+            "temperature": cfg.temperature,
             "messages": apiMessages
         ]
 
@@ -248,8 +258,8 @@ final class ChatService: ObservableObject {
     }
 
     // MARK: - Ollama (Local)
-    private func callOllama(messages: [ChatMessage]) async throws -> String {
-        let url = URL(string: "\(config.baseURL.isEmpty ? "http://localhost:11434" : config.baseURL)/api/chat")!
+    private func callOllama(messages: [ChatMessage], cfg: Config) async throws -> String {
+        let url = URL(string: "\(cfg.baseURL.isEmpty ? "http://localhost:11434" : cfg.baseURL)/api/chat")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -257,7 +267,7 @@ final class ChatService: ObservableObject {
         let apiMessages = messages.map { ["role": $0.role.rawValue, "content": $0.content] }
 
         let body: [String: Any] = [
-            "model": config.modelName.isEmpty ? "llama3.2" : config.modelName,
+            "model": cfg.modelName.isEmpty ? "llama3.2" : cfg.modelName,
             "messages": apiMessages,
             "stream": false
         ]
@@ -272,24 +282,25 @@ final class ChatService: ObservableObject {
     }
 
     // MARK: - Streaming: Claude
-    private func streamClaude(messages: [ChatMessage], onDelta: @escaping (String) -> Void) async throws {
-        guard !config.apiKey.isEmpty else { throw ChatError.missingAPIKey }
+    private func streamClaude(messages: [ChatMessage], cfg: Config, onDelta: @escaping (String) -> Void) async throws {
+        guard !cfg.apiKey.isEmpty else { throw ChatError.missingAPIKey }
 
-        let url = URL(string: "https://api.anthropic.com/v1/messages")!
+        let base = cfg.baseURL.isEmpty ? "https://api.anthropic.com" : cfg.baseURL
+        let url = URL(string: "\(base)/v1/messages")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(config.apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue(cfg.apiKey, forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
 
-        let systemContent = messages.first(where: { $0.role == .system })?.content ?? config.systemPrompt
+        let systemContent = messages.first(where: { $0.role == .system })?.content ?? cfg.systemPrompt
         let conversationMessages = messages
             .filter { $0.role != .system && !$0.content.isEmpty }
             .map { ["role": $0.role.rawValue, "content": $0.content] }
 
         let body: [String: Any] = [
-            "model": config.modelName,
-            "max_tokens": config.maxTokens,
+            "model": cfg.modelName,
+            "max_tokens": cfg.maxTokens,
             "system": systemContent,
             "messages": conversationMessages,
             "stream": true
@@ -317,23 +328,24 @@ final class ChatService: ObservableObject {
     }
 
     // MARK: - Streaming: OpenAI
-    private func streamOpenAI(messages: [ChatMessage], onDelta: @escaping (String) -> Void) async throws {
-        guard !config.apiKey.isEmpty else { throw ChatError.missingAPIKey }
+    private func streamOpenAI(messages: [ChatMessage], cfg: Config, onDelta: @escaping (String) -> Void) async throws {
+        guard !cfg.apiKey.isEmpty else { throw ChatError.missingAPIKey }
 
-        let url = URL(string: "\(config.baseURL.isEmpty ? "https://api.openai.com" : config.baseURL)/v1/chat/completions")!
+        let base = cfg.baseURL.isEmpty ? "https://api.openai.com" : cfg.baseURL
+        let url = URL(string: "\(base)/v1/chat/completions")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue("Bearer \(config.apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("Bearer \(cfg.apiKey)", forHTTPHeaderField: "Authorization")
 
         let apiMessages = messages
             .filter { !$0.content.isEmpty }
             .map { ["role": $0.role.rawValue, "content": $0.content] }
 
         let body: [String: Any] = [
-            "model": config.modelName,
-            "max_tokens": config.maxTokens,
-            "temperature": config.temperature,
+            "model": cfg.modelName,
+            "max_tokens": cfg.maxTokens,
+            "temperature": cfg.temperature,
             "messages": apiMessages,
             "stream": true
         ]
@@ -358,8 +370,8 @@ final class ChatService: ObservableObject {
     }
 
     // MARK: - Streaming: Ollama
-    private func streamOllama(messages: [ChatMessage], onDelta: @escaping (String) -> Void) async throws {
-        let url = URL(string: "\(config.baseURL.isEmpty ? "http://localhost:11434" : config.baseURL)/api/chat")!
+    private func streamOllama(messages: [ChatMessage], cfg: Config, onDelta: @escaping (String) -> Void) async throws {
+        let url = URL(string: "\(cfg.baseURL.isEmpty ? "http://localhost:11434" : cfg.baseURL)/api/chat")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
@@ -369,7 +381,7 @@ final class ChatService: ObservableObject {
             .map { ["role": $0.role.rawValue, "content": $0.content] }
 
         let body: [String: Any] = [
-            "model": config.modelName.isEmpty ? "llama3.2" : config.modelName,
+            "model": cfg.modelName.isEmpty ? "llama3.2" : cfg.modelName,
             "messages": apiMessages,
             "stream": true
         ]

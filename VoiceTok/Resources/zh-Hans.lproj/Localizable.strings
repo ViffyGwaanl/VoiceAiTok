@@ -148,3 +148,33 @@
 "Whisper Models" = "Whisper 模型";
 "Error" = "错误";
 "OK" = "好";
+
+// MARK: - AI Provider System
+"AI Providers" = "AI 供应商";
+"AI Chat" = "AI 对话";
+"Configure AI providers for transcript-based conversations. Supports Claude, OpenAI, Ollama, and custom OpenAI-compatible endpoints." = "配置用于转录内容对话的 AI 供应商，支持 Claude、OpenAI、Ollama 及自定义 OpenAI 兼容端点。";
+"Built-in Providers" = "内置供应商";
+"Custom Providers" = "自定义供应商";
+"Add Provider" = "添加供应商";
+"Provider Name" = "供应商名称";
+"Type" = "类型";
+"Add" = "添加";
+"OpenAI Compatible" = "OpenAI 兼容";
+"Set Default" = "设为默认";
+"Disabled" = "已禁用";
+
+// MARK: - AI Provider Detail
+"Enabled" = "启用";
+"Active Provider" = "当前使用中";
+"Set as Default" = "设为默认供应商";
+"Connection" = "连接";
+"Base URL" = "基础 URL";
+"Authentication" = "认证";
+"API keys are stored securely in iOS Keychain and never synced." = "API 密钥安全存储在 iOS 钥匙串中，不会同步。";
+"Parameters" = "参数";
+"Temperature" = "温度";
+"Max Tokens" = "最大 Token 数";
+"System Prompt" = "系统提示词";
+"Reset to Default" = "恢复默认";
+"Delete Provider" = "删除供应商";
+"Save" = "保存";
