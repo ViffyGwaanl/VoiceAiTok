@@ -118,6 +118,49 @@ final class MediaLibraryService: ObservableObject {
         return nil
     }
 
+    // MARK: - Share Extension Inbox Import
+    /// Scans the App Group shared container for files deposited by the Share Extension,
+    /// imports each one into the library, then deletes it from the inbox.
+    @discardableResult
+    func importFromSharedContainer() async -> Int {
+        let appGroupID = "group.com.voicetok.app"
+        guard let container = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: appGroupID) else { return 0 }
+
+        let inbox = container.appendingPathComponent("ShareInbox")
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: inbox,
+            includingPropertiesForKeys: [.isRegularFileKey],
+            options: .skipsHiddenFiles
+        ) else { return 0 }
+
+        var imported = 0
+        for fileURL in files {
+            let ext = fileURL.pathExtension.lowercased()
+            guard Self.supportedExtensions.contains(ext) else {
+                try? FileManager.default.removeItem(at: fileURL)
+                continue
+            }
+            // Skip if already in library (same filename in our documents dir)
+            let destName = fileURL.lastPathComponent
+            let alreadyExists = mediaItems.contains { item in
+                (item.fileURL?.lastPathComponent ?? URL(fileURLWithPath: item.filePath).lastPathComponent) == destName
+            }
+            guard !alreadyExists else {
+                try? FileManager.default.removeItem(at: fileURL)
+                continue
+            }
+            do {
+                _ = try await importMedia(from: fileURL)
+                try? FileManager.default.removeItem(at: fileURL)
+                imported += 1
+            } catch {
+                print("[Library] Share inbox import failed: \(error)")
+            }
+        }
+        return imported
+    }
+
     // MARK: - Update Item
     func updateItem(_ item: MediaItem) {
         if let index = mediaItems.firstIndex(where: { $0.id == item.id }) {

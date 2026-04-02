@@ -36,13 +36,15 @@ targets:
       - path: VoiceTok
         excludes:
           - "Resources/Info.plist"
+          - "ShareExtension/**"
+          - "Entitlements/**"
     info:
       path: VoiceTok/Resources/Info.plist
       properties:
         CFBundleIconName: AppIcon
         CFBundleDisplayName: VoiceTok
         CFBundleShortVersionString: "1.0.0"
-        CFBundleVersion: "8"
+        CFBundleVersion: "9"
         LSRequiresIPhoneOS: true
         UILaunchScreen:
           UIColorName: AccentColor
@@ -83,6 +85,7 @@ targets:
     dependencies:
       - package: WhisperKit
         product: WhisperKit
+      - target: VoiceTokShare
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.voicetok.app
@@ -96,3 +99,34 @@ targets:
         DEVELOPMENT_TEAM: 3LJ45MFB74
         CODE_SIGN_STYLE: Automatic
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CODE_SIGN_ENTITLEMENTS: VoiceTok/Entitlements/VoiceTok.entitlements
+
+  VoiceTokShare:
+    type: app-extension
+    platform: iOS
+    deploymentTarget: "17.0"
+    sources:
+      - path: VoiceTok/ShareExtension
+        excludes:
+          - "*.entitlements"
+    info:
+      path: VoiceTok/ShareExtension/Info.plist
+      properties:
+        CFBundleDisplayName: VoiceTok
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "9"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.share-services
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
+          NSExtensionAttributes:
+            NSExtensionActivationRule: "SUBQUERY(extensionItems, $item, SUBQUERY($item.attachments, $att, ANY $att.registeredTypeIdentifiers UTI-CONFORMS-TO 'public.movie' OR ANY $att.registeredTypeIdentifiers UTI-CONFORMS-TO 'public.audio').@count > 0).@count > 0"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.voicetok.app.share
+        SWIFT_VERSION: "5.9"
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        DEVELOPMENT_TEAM: 3LJ45MFB74
+        CODE_SIGN_STYLE: Automatic
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SKIP_INSTALL: YES
+        CODE_SIGN_ENTITLEMENTS: VoiceTok/ShareExtension/VoiceTokShare.entitlements

@@ -13,11 +13,13 @@
 		520F3496B7B28D0292B964CE /* PlayerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1125CBDBC6932DEB5B407640 /* PlayerViewModel.swift */; };
 		546B5F668C747AA88ADAB9AB /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76EC243C68D0836A73ACFD36 /* ChatView.swift */; };
 		5CA3A5791AC2F68DC3EC038C /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E94A12459E1DBCA690FBADB /* PlayerView.swift */; };
+		5E28063F241B500920F610DE /* VoiceTokShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B0BF995600F161033A1E8316 /* VoiceTokShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5F3FDF6EEE064061B64CCD1E /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 34CB6366BD3C7008AE03764A /* Localizable.strings */; };
 		6B6D76E7CA10840DF7153CA1 /* MediaItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16ACB3E1C97DB4E38FF3D8FB /* MediaItem.swift */; };
 		6E1FD0C63547C7F525A9117D /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFC610CDFA03EE2562E99C3 /* AppState.swift */; };
 		7D0715DEBF15CC99A08602D5 /* AIProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E1DED2BA47BFDFC72EEEC904 /* AIProvider.swift */; };
 		A097858855FDA39040C5A868 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B50188A3928A53C2CCDCF38 /* LibraryView.swift */; };
+		A0BB3891883EC92D07CE3914 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C09113C31E653ECAACE7983F /* ShareViewController.swift */; };
 		A195751A713ABECA1849D358 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 928B924E8A54431F76BB3502 /* ContentView.swift */; };
 		A95CFCFC356826F25F153C0E /* ModelManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8C3ACB4427D071E66E05575 /* ModelManagementView.swift */; };
 		AB12D027FEEB13F62343F1EA /* VoiceTokApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A961B55C7B3653DE4CEC5970 /* VoiceTokApp.swift */; };
@@ -32,12 +34,37 @@
 		F30C0BC4D220D54CA616271A /* AIProviderListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7AD9D149CB87801EC4A52BC6 /* AIProviderListView.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		A2BEB8AC0C1E3F3337DE9FEF /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 4AE1AFB6D0BC2216097A114E /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B76C4B6F63EA73C29CF26DC6;
+			remoteInfo = VoiceTokShare;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		7481CD11BC547A290EDD72C5 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				5E28063F241B500920F610DE /* VoiceTokShare.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		0AF7A1F52E7020566B1D9117 /* MediaPlayerService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaPlayerService.swift; sourceTree = "<group>"; };
 		1125CBDBC6932DEB5B407640 /* PlayerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewModel.swift; sourceTree = "<group>"; };
 		136A6D8D6DBF988DD0F58FE9 /* AIProviderDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderDetailView.swift; sourceTree = "<group>"; };
 		16ACB3E1C97DB4E38FF3D8FB /* MediaItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaItem.swift; sourceTree = "<group>"; };
 		2CFC610CDFA03EE2562E99C3 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		326B31E3477257AA4A4EF6C8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		34CB6366BD3C7008AE03764A /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		396BFD7B6D0DE9A090B386AC /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		3E94A12459E1DBCA690FBADB /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
@@ -50,7 +77,9 @@
 		949CAC7DCF4F6585C2D5C22B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9B50188A3928A53C2CCDCF38 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
 		A961B55C7B3653DE4CEC5970 /* VoiceTokApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceTokApp.swift; sourceTree = "<group>"; };
+		B0BF995600F161033A1E8316 /* VoiceTokShare.appex */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "wrapper.app-extension"; path = VoiceTokShare.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B45DC9BFDDF2074B46161C81 /* VoiceTok.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VoiceTok.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C09113C31E653ECAACE7983F /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
 		CCCF01366277CC330A96B003 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		E1DED2BA47BFDFC72EEEC904 /* AIProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProvider.swift; sourceTree = "<group>"; };
 		E8C3ACB4427D071E66E05575 /* ModelManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManagementView.swift; sourceTree = "<group>"; };
@@ -101,6 +130,7 @@
 			isa = PBXGroup;
 			children = (
 				B45DC9BFDDF2074B46161C81 /* VoiceTok.app */,
+				B0BF995600F161033A1E8316 /* VoiceTokShare.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -121,6 +151,15 @@
 				76EC243C68D0836A73ACFD36 /* ChatView.swift */,
 			);
 			path = Chat;
+			sourceTree = "<group>";
+		};
+		A15D55FD6AF24B1EF79D8CEB /* ShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				326B31E3477257AA4A4EF6C8 /* Info.plist */,
+				C09113C31E653ECAACE7983F /* ShareViewController.swift */,
+			);
+			path = ShareExtension;
 			sourceTree = "<group>";
 		};
 		AA0C77937A28410EEA49EEB0 /* Extensions */ = {
@@ -199,6 +238,7 @@
 				1BCC7F75B7A95303878FE7CE /* Models */,
 				29D3F53B703BC6095D464681 /* Resources */,
 				B6EA6CE7C2B4982AB9F66747 /* Services */,
+				A15D55FD6AF24B1EF79D8CEB /* ShareExtension */,
 				AC39C9C9A721BA50428BC6CA /* ViewModels */,
 				C59E111AD4A365B16DA86341 /* Views */,
 			);
@@ -215,10 +255,12 @@
 				8A7804461FC1132A63931800 /* Sources */,
 				7E70B6CBE12653D6C22DAC1E /* Resources */,
 				D90879165C1113C808BB95FD /* Frameworks */,
+				7481CD11BC547A290EDD72C5 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				6F8B7F2F51EBE72E66DE091D /* PBXTargetDependency */,
 			);
 			name = VoiceTok;
 			packageProductDependencies = (
@@ -227,6 +269,23 @@
 			productName = VoiceTok;
 			productReference = B45DC9BFDDF2074B46161C81 /* VoiceTok.app */;
 			productType = "com.apple.product-type.application";
+		};
+		B76C4B6F63EA73C29CF26DC6 /* VoiceTokShare */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EA03CEB27821EAB80588BE3F /* Build configuration list for PBXNativeTarget "VoiceTokShare" */;
+			buildPhases = (
+				73856E8F78F94DFA12FE6B64 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = VoiceTokShare;
+			packageProductDependencies = (
+			);
+			productName = VoiceTokShare;
+			productReference = B0BF995600F161033A1E8316 /* VoiceTokShare.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -238,6 +297,10 @@
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
 					AE9FF41F8E76D086D9906D51 = {
+						DevelopmentTeam = 3LJ45MFB74;
+						ProvisioningStyle = Automatic;
+					};
+					B76C4B6F63EA73C29CF26DC6 = {
 						DevelopmentTeam = 3LJ45MFB74;
 						ProvisioningStyle = Automatic;
 					};
@@ -262,6 +325,7 @@
 			projectRoot = "";
 			targets = (
 				AE9FF41F8E76D086D9906D51 /* VoiceTok */,
+				B76C4B6F63EA73C29CF26DC6 /* VoiceTokShare */,
 			);
 		};
 /* End PBXProject section */
@@ -280,6 +344,14 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		73856E8F78F94DFA12FE6B64 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0BB3891883EC92D07CE3914 /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		8A7804461FC1132A63931800 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -307,6 +379,14 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6F8B7F2F51EBE72E66DE091D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B76C4B6F63EA73C29CF26DC6 /* VoiceTokShare */;
+			targetProxy = A2BEB8AC0C1E3F3337DE9FEF /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		123EC49D3C0F0FA0C2A2CF05 /* Debug */ = {
@@ -376,10 +456,32 @@
 			};
 			name = Debug;
 		};
+		5E31A27E1923B4BA81EA5F1C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = VoiceTok/ShareExtension/VoiceTokShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3LJ45MFB74;
+				INFOPLIST_FILE = VoiceTok/ShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.voicetok.app.share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 		9F6EF04D4C7AA00ACF8E598D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = VoiceTok/Entitlements/VoiceTok.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 3LJ45MFB74;
@@ -399,10 +501,32 @@
 			};
 			name = Release;
 		};
+		A5A8EFDA635C6C7AB0159377 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = VoiceTok/ShareExtension/VoiceTokShare.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3LJ45MFB74;
+				INFOPLIST_FILE = VoiceTok/ShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.voicetok.app.share;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.9;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		DA0F643BAA583C6B5FDF9705 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = VoiceTok/Entitlements/VoiceTok.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 3LJ45MFB74;
@@ -499,6 +623,15 @@
 			buildConfigurations = (
 				123EC49D3C0F0FA0C2A2CF05 /* Debug */,
 				E0C9F406611B69CF53C347C5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		EA03CEB27821EAB80588BE3F /* Build configuration list for PBXNativeTarget "VoiceTokShare" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A5A8EFDA635C6C7AB0159377 /* Debug */,
+				5E31A27E1923B4BA81EA5F1C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;
