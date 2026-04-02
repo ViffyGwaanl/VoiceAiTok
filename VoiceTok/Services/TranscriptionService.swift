@@ -180,7 +180,7 @@ final class TranscriptionService: ObservableObject {
             throw TranscriptionError.noAudioTrack
         }
 
-        let outputSettings: [String: Any] = [
+        let readerSettings: [String: Any] = [
             AVFormatIDKey: kAudioFormatLinearPCM,
             AVSampleRateKey: 16000.0,              // WhisperKit expects 16kHz
             AVNumberOfChannelsKey: 1,               // Mono
@@ -189,16 +189,26 @@ final class TranscriptionService: ObservableObject {
             AVLinearPCMIsBigEndianKey: false
         ]
 
+        let writerSettings: [String: Any] = [
+            AVFormatIDKey: kAudioFormatLinearPCM,
+            AVSampleRateKey: 16000.0,
+            AVNumberOfChannelsKey: 1,
+            AVLinearPCMBitDepthKey: 16,
+            AVLinearPCMIsFloatKey: false,
+            AVLinearPCMIsBigEndianKey: false,
+            AVLinearPCMIsNonInterleaved: false      // Required by AVAssetWriterInput on device
+        ]
+
         let readerOutput = AVAssetReaderTrackOutput(
             track: audioTrack,
-            outputSettings: outputSettings
+            outputSettings: readerSettings
         )
         reader.add(readerOutput)
 
         let writer = try AVAssetWriter(outputURL: outputURL, fileType: .wav)
         let writerInput = AVAssetWriterInput(
             mediaType: .audio,
-            outputSettings: outputSettings
+            outputSettings: writerSettings
         )
         writer.add(writerInput)
 
