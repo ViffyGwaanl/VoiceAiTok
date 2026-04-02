@@ -12,21 +12,21 @@ struct ContentView: View {
             // Library Tab
             LibraryView()
                 .tabItem {
-                    Label(AppTab.library.rawValue, systemImage: AppTab.library.icon)
+                    Label(LocalizedStringKey(AppTab.library.rawValue), systemImage: AppTab.library.icon)
                 }
                 .tag(AppTab.library)
 
             // Player Tab
             PlayerContainerView()
                 .tabItem {
-                    Label(AppTab.player.rawValue, systemImage: AppTab.player.icon)
+                    Label(LocalizedStringKey(AppTab.player.rawValue), systemImage: AppTab.player.icon)
                 }
                 .tag(AppTab.player)
 
             // Chat Tab
             ChatContainerView()
                 .tabItem {
-                    Label(AppTab.chat.rawValue, systemImage: AppTab.chat.icon)
+                    Label(LocalizedStringKey(AppTab.chat.rawValue), systemImage: AppTab.chat.icon)
                 }
                 .tag(AppTab.chat)
         }

@@ -7,14 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1673A8B1034B31557AD7AA7A /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = CCCF01366277CC330A96B003 /* InfoPlist.strings */; };
 		1A802BAECEB349A75D895A77 /* Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 396BFD7B6D0DE9A090B386AC /* Extensions.swift */; };
 		3416C6B0A0FF9FABD487AFAE /* MediaLibraryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8647EC6957554048509A01B6 /* MediaLibraryService.swift */; };
 		520F3496B7B28D0292B964CE /* PlayerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1125CBDBC6932DEB5B407640 /* PlayerViewModel.swift */; };
 		546B5F668C747AA88ADAB9AB /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76EC243C68D0836A73ACFD36 /* ChatView.swift */; };
 		5CA3A5791AC2F68DC3EC038C /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E94A12459E1DBCA690FBADB /* PlayerView.swift */; };
+		5F3FDF6EEE064061B64CCD1E /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 34CB6366BD3C7008AE03764A /* Localizable.strings */; };
 		6B6D76E7CA10840DF7153CA1 /* MediaItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16ACB3E1C97DB4E38FF3D8FB /* MediaItem.swift */; };
 		6E1FD0C63547C7F525A9117D /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFC610CDFA03EE2562E99C3 /* AppState.swift */; };
-		920C4165B4A5998267CB59E1 /* Pods_VoiceTok.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B7D024B2C96818F339246E12 /* Pods_VoiceTok.framework */; };
 		A097858855FDA39040C5A868 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B50188A3928A53C2CCDCF38 /* LibraryView.swift */; };
 		A195751A713ABECA1849D358 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 928B924E8A54431F76BB3502 /* ContentView.swift */; };
 		AB12D027FEEB13F62343F1EA /* VoiceTokApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A961B55C7B3653DE4CEC5970 /* VoiceTokApp.swift */; };
@@ -31,6 +32,7 @@
 		1125CBDBC6932DEB5B407640 /* PlayerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewModel.swift; sourceTree = "<group>"; };
 		16ACB3E1C97DB4E38FF3D8FB /* MediaItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaItem.swift; sourceTree = "<group>"; };
 		2CFC610CDFA03EE2562E99C3 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		34CB6366BD3C7008AE03764A /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		396BFD7B6D0DE9A090B386AC /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		3E94A12459E1DBCA690FBADB /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
 		4E8F18DEF8FAC0B82637D48E /* ChatService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatService.swift; sourceTree = "<group>"; };
@@ -39,11 +41,9 @@
 		928B924E8A54431F76BB3502 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		949CAC7DCF4F6585C2D5C22B /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		9B50188A3928A53C2CCDCF38 /* LibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryView.swift; sourceTree = "<group>"; };
-		9F3B627CE727D462BEDAACC4 /* Pods-VoiceTok.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VoiceTok.release.xcconfig"; path = "Target Support Files/Pods-VoiceTok/Pods-VoiceTok.release.xcconfig"; sourceTree = "<group>"; };
 		A961B55C7B3653DE4CEC5970 /* VoiceTokApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceTokApp.swift; sourceTree = "<group>"; };
 		B45DC9BFDDF2074B46161C81 /* VoiceTok.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VoiceTok.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B7D024B2C96818F339246E12 /* Pods_VoiceTok.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VoiceTok.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		CB10A7486E910FB189639DD5 /* Pods-VoiceTok.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VoiceTok.debug.xcconfig"; path = "Target Support Files/Pods-VoiceTok/Pods-VoiceTok.debug.xcconfig"; sourceTree = "<group>"; };
+		CCCF01366277CC330A96B003 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
 		F5268CA5BE7A533D3EB49026 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		FA7C736E89A86945EDE19007 /* TranscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -54,7 +54,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				ACA5E4C7A2DA122444DF8806 /* WhisperKit in Frameworks */,
-				920C4165B4A5998267CB59E1 /* Pods_VoiceTok.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -67,6 +66,15 @@
 				16ACB3E1C97DB4E38FF3D8FB /* MediaItem.swift */,
 			);
 			path = Models;
+			sourceTree = "<group>";
+		};
+		29D3F53B703BC6095D464681 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				CCCF01366277CC330A96B003 /* InfoPlist.strings */,
+				34CB6366BD3C7008AE03764A /* Localizable.strings */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		4D39991D88A667BAB5B9E96A /* Library */ = {
@@ -91,16 +99,6 @@
 				76EC243C68D0836A73ACFD36 /* ChatView.swift */,
 			);
 			path = Chat;
-			sourceTree = "<group>";
-		};
-		914D5AA22550F02E4E2E3A99 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				CB10A7486E910FB189639DD5 /* Pods-VoiceTok.debug.xcconfig */,
-				9F3B627CE727D462BEDAACC4 /* Pods-VoiceTok.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
 			sourceTree = "<group>";
 		};
 		AA0C77937A28410EEA49EEB0 /* Extensions */ = {
@@ -165,8 +163,6 @@
 			children = (
 				D72A08947995F0CCDF2A9E88 /* VoiceTok */,
 				52C5843458B0492F1050A11A /* Products */,
-				914D5AA22550F02E4E2E3A99 /* Pods */,
-				FA0CC6F09FA85A23AAEADA36 /* Frameworks */,
 			);
 			indentWidth = 4;
 			sourceTree = "<group>";
@@ -178,19 +174,12 @@
 				B4068C5C9637FF807CB0317C /* App */,
 				AA0C77937A28410EEA49EEB0 /* Extensions */,
 				1BCC7F75B7A95303878FE7CE /* Models */,
+				29D3F53B703BC6095D464681 /* Resources */,
 				B6EA6CE7C2B4982AB9F66747 /* Services */,
 				AC39C9C9A721BA50428BC6CA /* ViewModels */,
 				C59E111AD4A365B16DA86341 /* Views */,
 			);
 			path = VoiceTok;
-			sourceTree = "<group>";
-		};
-		FA0CC6F09FA85A23AAEADA36 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				B7D024B2C96818F339246E12 /* Pods_VoiceTok.framework */,
-			);
-			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -200,10 +189,9 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 3ADB2FFE9DD0A996430E6C14 /* Build configuration list for PBXNativeTarget "VoiceTok" */;
 			buildPhases = (
-				F40CA70B6823BF0A76515E85 /* [CP] Check Pods Manifest.lock */,
 				8A7804461FC1132A63931800 /* Sources */,
+				7E70B6CBE12653D6C22DAC1E /* Resources */,
 				D90879165C1113C808BB95FD /* Frameworks */,
-				F3C04B92935106570785BEF8 /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -234,6 +222,7 @@
 			knownRegions = (
 				Base,
 				en,
+				"zh-Hans",
 			);
 			mainGroup = CDA73A3815EFD542B2C98589;
 			minimizedProjectReferenceProxies = 1;
@@ -250,47 +239,17 @@
 		};
 /* End PBXProject section */
 
-/* Begin PBXShellScriptBuildPhase section */
-		F3C04B92935106570785BEF8 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
+/* Begin PBXResourcesBuildPhase section */
+		7E70B6CBE12653D6C22DAC1E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-VoiceTok/Pods-VoiceTok-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-VoiceTok/Pods-VoiceTok-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				1673A8B1034B31557AD7AA7A /* InfoPlist.strings in Resources */,
+				5F3FDF6EEE064061B64CCD1E /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-VoiceTok/Pods-VoiceTok-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
 		};
-		F40CA70B6823BF0A76515E85 /* [CP] Check Pods Manifest.lock */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
-				"${PODS_ROOT}/Manifest.lock",
-			);
-			name = "[CP] Check Pods Manifest.lock";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-VoiceTok-checkManifestLockResult.txt",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
-			showEnvVarsInLog = 0;
-		};
-/* End PBXShellScriptBuildPhase section */
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		8A7804461FC1132A63931800 /* Sources */ = {
@@ -387,7 +346,6 @@
 		};
 		9F6EF04D4C7AA00ACF8E598D /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 9F3B627CE727D462BEDAACC4 /* Pods-VoiceTok.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
@@ -409,7 +367,6 @@
 		};
 		DA0F643BAA583C6B5FDF9705 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = CB10A7486E910FB189639DD5 /* Pods-VoiceTok.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";

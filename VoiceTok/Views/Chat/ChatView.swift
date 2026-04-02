@@ -224,7 +224,7 @@ struct ChatBubble: View {
 
 // MARK: - Quick Action Button
 struct QuickActionButton: View {
-    let title: String
+    let title: LocalizedStringKey
     let icon: String
     let action: () -> Void
 

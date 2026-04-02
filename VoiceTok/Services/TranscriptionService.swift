@@ -243,11 +243,11 @@ enum TranscriptionError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .notInitialized: return "WhisperKit is not initialized"
-        case .transcriptionFailed: return "Transcription failed"
-        case .audioExtractionFailed: return "Could not extract audio from media"
-        case .noAudioTrack: return "No audio track found in media"
-        case .invalidAudioFormat: return "Invalid audio format"
+        case .notInitialized: return String(localized: "WhisperKit is not initialized")
+        case .transcriptionFailed: return String(localized: "Transcription failed")
+        case .audioExtractionFailed: return String(localized: "Could not extract audio from media")
+        case .noAudioTrack: return String(localized: "No audio track found in media")
+        case .invalidAudioFormat: return String(localized: "Invalid audio format")
         }
     }
 }

@@ -7,6 +7,11 @@ options:
   usesTabs: false
   indentWidth: 4
   xcodeVersion: "16.0"
+  developmentLanguage: en
+  knownRegions:
+    - Base
+    - en
+    - zh-Hans
 
 packages:
   WhisperKit:

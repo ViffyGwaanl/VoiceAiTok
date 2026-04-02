@@ -123,7 +123,7 @@ final class ChatService: ObservableObject {
                 if let idx = messages.lastIndex(where: { $0.id == placeholderId }) {
                     messages[idx] = ChatMessage(
                         id: placeholderId, role: .assistant,
-                        content: "Sorry, I encountered an error: \(error.localizedDescription)"
+                        content: String(format: String(localized: "Sorry, I encountered an error: %@"), error.localizedDescription)
                     )
                 }
             }
@@ -407,7 +407,7 @@ enum ChatError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .missingAPIKey: return "API key not configured. Go to Settings to add your key."
+        case .missingAPIKey: return String(localized: "API key not configured. Go to Settings to add your key.")
         case .apiError(let msg): return msg
         }
     }

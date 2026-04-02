@@ -134,12 +134,12 @@ enum TranscriptionState: Equatable {
 
     var displayText: String {
         switch self {
-        case .idle: return "Ready"
-        case .preparing: return "Preparing WhisperKit..."
-        case .extractingAudio: return "Extracting audio track..."
-        case .transcribing(let p): return "Transcribing... \(Int(p * 100))%"
-        case .completed: return "Transcription complete"
-        case .failed(let e): return "Failed: \(e)"
+        case .idle: return String(localized: "Ready")
+        case .preparing: return String(localized: "Preparing WhisperKit...")
+        case .extractingAudio: return String(localized: "Extracting audio track...")
+        case .transcribing(let p): return String(format: String(localized: "Transcribing... %d%%"), Int(p * 100))
+        case .completed: return String(localized: "Transcription complete")
+        case .failed(let e): return String(format: String(localized: "Failed: %@"), e)
         }
     }
 }

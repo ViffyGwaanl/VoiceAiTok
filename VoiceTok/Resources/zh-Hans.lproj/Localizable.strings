@@ -1,0 +1,132 @@
+/* VoiceTok - Simplified Chinese Localization */
+
+// MARK: - Tab Bar
+"Library" = "媒体库";
+"Player" = "播放器";
+"Chat" = "AI 对话";
+
+// MARK: - Common
+"Cancel" = "取消";
+"Done" = "完成";
+"Import" = "导入";
+"Delete" = "删除";
+"Retry" = "重试";
+"Settings" = "设置";
+
+// MARK: - Library View
+"Your Media Library" = "你的媒体库";
+"Import video or audio files to transcribe\nand chat about their content with AI." = "导入视频或音频文件，转录后即可与 AI 对话。";
+"Import Media" = "导入媒体";
+"Import from Files" = "从文件导入";
+"Import from URL" = "从链接导入";
+"Sort by" = "排序方式";
+"Search media..." = "搜索媒体...";
+"Newest First" = "最新优先";
+"Oldest First" = "最旧优先";
+"Title A→Z" = "标题 A→Z";
+"Title Z→A" = "标题 Z→A";
+"Longest" = "时长最长";
+"https://..." = "https://...";
+"Transcribed" = "已转录";
+
+// MARK: - Player View
+"No Media Selected" = "未选择媒体";
+"Import a video or audio file from\nthe Library tab to get started." = "请先在媒体库标签页导入视频或音频文件。";
+"Select Model" = "选择模型";
+"Transcribe" = "转录";
+"Export Transcript" = "导出转录文本";
+"Select Whisper Model" = "选择 Whisper 模型";
+"Transcript" = "转录文本";
+"segments" = "段";
+"Ready to Transcribe" = "准备转录";
+"Use WhisperKit to convert speech to text,\nthen chat about the content with AI." = "使用 WhisperKit 将语音转为文字，然后与 AI 对话。";
+"Start Transcription" = "开始转录";
+
+// MARK: - Transcription State
+"Ready" = "就绪";
+"Preparing WhisperKit..." = "正在准备 WhisperKit...";
+"Extracting audio track..." = "正在提取音频轨道...";
+"Transcribing... %d%%" = "转录中... %d%%";
+"Transcription complete" = "转录完成";
+"Failed: %@" = "失败：%@";
+
+// MARK: - Chat View
+"AI Chat" = "AI 对话";
+"No Transcript Available" = "暂无转录文本";
+"Transcribe a media file first, then\nyou can chat about its content with AI." = "请先转录媒体文件，然后即可与 AI 对话。";
+"Chat About Your Media" = "与媒体内容对话";
+"Ask questions about the transcribed content.\nI can summarize, explain, translate, and more." = "你可以询问转录内容的任何问题，我可以总结、解释、翻译等。";
+"Summarize" = "总结";
+"Key Topics" = "关键主题";
+"Study Notes" = "学习笔记";
+"Translate to 中文" = "翻译成中文";
+"Translate to EN" = "翻译成英文";
+"Ask about the content..." = "询问内容...";
+"Hide Quick Actions" = "隐藏快捷操作";
+"Show Quick Actions" = "显示快捷操作";
+"Clear Chat" = "清除对话";
+
+// MARK: - Settings View
+"Provider" = "服务商";
+"API Key" = "API 密钥";
+"Base URL (optional)" = "基础 URL（可选）";
+"Model Name" = "模型名称";
+"AI Chat API" = "AI 对话 API";
+"Configure the LLM provider for transcript-based AI conversations. Claude, OpenAI, or local Ollama are supported." = "配置用于转录内容对话的 AI 服务商，支持 Claude、OpenAI 或本地 Ollama。";
+"Model" = "模型";
+"Word-level Timestamps" = "词级时间戳";
+"Auto-transcribe on Import" = "导入时自动转录";
+"Language" = "语言";
+"Auto-detect" = "自动检测";
+"WhisperKit Transcription" = "WhisperKit 转录";
+"Larger models are more accurate but slower. 'base' is recommended for most devices. 'large-v3' provides the best quality on newer iPhones/iPads." = "更大的模型更精准但速度更慢。大多数设备推荐使用 'base' 模型，'large-v3' 在新款 iPhone/iPad 上效果最佳。";
+"Audio & Video Settings" = "音视频设置";
+"Playback" = "播放";
+"Version" = "版本";
+"Built with" = "技术栈";
+"WhisperKit on GitHub" = "WhisperKit GitHub 页面";
+"VLC for iOS on GitHub" = "VLC iOS GitHub 页面";
+"About VoiceTok" = "关于 VoiceTok";
+"Clear All Transcripts" = "清除所有转录文本";
+"Clear All Data" = "清除所有数据";
+"Data Management" = "数据管理";
+
+// MARK: - Language Names (Transcription Language Picker)
+"English" = "英语";
+"Chinese / 中文" = "中文";
+"Japanese / 日本語" = "日语";
+"Korean / 한국어" = "韩语";
+"Spanish" = "西班牙语";
+"French" = "法语";
+"German" = "德语";
+"Portuguese" = "葡萄牙语";
+"Russian" = "俄语";
+"Arabic" = "阿拉伯语";
+"Hindi" = "印地语";
+"Italian" = "意大利语";
+"Dutch" = "荷兰语";
+"Swedish" = "瑞典语";
+"Polish" = "波兰语";
+"Turkish" = "土耳其语";
+"Thai" = "泰语";
+"Vietnamese" = "越南语";
+
+// MARK: - Playback Settings
+"General" = "通用";
+"Background Playback" = "后台播放";
+"Default Speed" = "默认速度";
+"Skip Interval" = "跳转间隔";
+"5 sec" = "5 秒";
+"10 sec" = "10 秒";
+"15 sec" = "15 秒";
+"30 sec" = "30 秒";
+"Playback Settings" = "播放设置";
+
+// MARK: - Errors
+"WhisperKit is not initialized" = "WhisperKit 未初始化";
+"Transcription failed" = "转录失败";
+"Could not extract audio from media" = "无法从媒体中提取音频";
+"No audio track found in media" = "未找到音频轨道";
+"Invalid audio format" = "无效的音频格式";
+"API key not configured. Go to Settings to add your key." = "未配置 API 密钥，请前往设置页面添加。";
+"Sorry, I encountered an error: %@" = "抱歉，发生了错误：%@";
