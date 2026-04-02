@@ -24,6 +24,7 @@
 		ACA5E4C7A2DA122444DF8806 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 797B0435FB57207B2C7CE2D3 /* WhisperKit */; };
 		B7211712AB4F4CF40E865278 /* ChatService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E8F18DEF8FAC0B82637D48E /* ChatService.swift */; };
 		C7397FDE3F02A1B1FED4021B /* KeychainService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5268CA5BE7A533D3EB49026 /* KeychainService.swift */; };
+		C8C2C8E148169267E5823889 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4226510E69A86F23F991F388 /* Assets.xcassets */; };
 		CB6C15D64C042D9781FF0154 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 949CAC7DCF4F6585C2D5C22B /* SettingsView.swift */; };
 		CFFD5A4D501FBE3A4F227EB1 /* TranscriptionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA7C736E89A86945EDE19007 /* TranscriptionService.swift */; };
 /* End PBXBuildFile section */
@@ -36,6 +37,7 @@
 		34CB6366BD3C7008AE03764A /* Localizable.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = Localizable.strings; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		396BFD7B6D0DE9A090B386AC /* Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Extensions.swift; sourceTree = "<group>"; };
 		3E94A12459E1DBCA690FBADB /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
+		4226510E69A86F23F991F388 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4E8F18DEF8FAC0B82637D48E /* ChatService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatService.swift; sourceTree = "<group>"; };
 		76EC243C68D0836A73ACFD36 /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		8647EC6957554048509A01B6 /* MediaLibraryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaLibraryService.swift; sourceTree = "<group>"; };
@@ -73,6 +75,7 @@
 		29D3F53B703BC6095D464681 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				4226510E69A86F23F991F388 /* Assets.xcassets */,
 				CCCF01366277CC330A96B003 /* InfoPlist.strings */,
 				34CB6366BD3C7008AE03764A /* Localizable.strings */,
 			);
@@ -225,6 +228,10 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
 				TargetAttributes = {
+					AE9FF41F8E76D086D9906D51 = {
+						DevelopmentTeam = 3LJ45MFB74;
+						ProvisioningStyle = Automatic;
+					};
 				};
 			};
 			buildConfigurationList = 79BD0C141079D599AA318D5A /* Build configuration list for PBXProject "VoiceTok" */;
@@ -255,6 +262,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8C2C8E148169267E5823889 /* Assets.xcassets in Resources */,
 				1673A8B1034B31557AD7AA7A /* InfoPlist.strings in Resources */,
 				5F3FDF6EEE064061B64CCD1E /* Localizable.strings in Resources */,
 			);
@@ -361,6 +369,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3LJ45MFB74;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = VoiceTok/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -382,6 +392,8 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 3LJ45MFB74;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = VoiceTok/Resources/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
