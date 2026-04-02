@@ -1,200 +1,139 @@
 # VoiceTok — 项目状态与开发路线图
 
-> **文档类型**：工程状态追踪 + 产品路线图  
-> **最后更新**：2026-04-01  
-> **当前版本**：v1.0.0（源码生成完毕，待 Xcode 工程集成）  
-> **负责人**：独立开发者
+> **文档类型**：工程状态追踪 + 产品路线图
+> **最后更新**：2026-04-01
+> **当前版本**：v1.0.0（5 commits，BUILD SUCCEEDED ✅）
+> **仓库**：https://github.com/ViffyGwaanl/VoiceAiTok
 
 ---
 
-## 一、当前版本状态（v1.0.0）
+## 一、交付清单 — v1.0
 
-### 1.1 交付物清单
+### 核心功能
 
-| 类别 | 文件 | 行数 | 状态 |
-|------|------|------|------|
-| **App 层** | `VoiceTokApp.swift` | 16 | ✅ 完成 |
-| **App 层** | `AppState.swift` | 46 | ✅ 完成 |
-| **数据模型** | `MediaItem.swift` | 153 | ✅ 完成 |
-| **服务层** | `TranscriptionService.swift` | 225 | ✅ 完成 |
-| **服务层** | `MediaPlayerService.swift` | 236 | ✅ 完成 |
-| **服务层** | `ChatService.swift` | 240 | ✅ 完成 |
-| **服务层** | `MediaLibraryService.swift` | 178 | ✅ 完成 |
-| **ViewModel** | `PlayerViewModel.swift` | 115 | ✅ 完成 |
-| **视图层** | `ContentView.swift` | 109 | ✅ 完成 |
-| **视图层** | `LibraryView.swift` | 227 | ✅ 完成 |
-| **视图层** | `PlayerView.swift` | 440 | ✅ 完成 |
-| **视图层** | `ChatView.swift` | 278 | ✅ 完成 |
-| **视图层** | `SettingsView.swift` | 210 | ✅ 完成 |
-| **工具扩展** | `Extensions.swift` | 89 | ✅ 完成 |
-| **资源** | `Info.plist` | 109 | ✅ 完成 |
-| **配置** | `Package.swift` | 24 | ✅ 完成 |
-| **配置** | `Podfile` | 20 | ✅ 完成 |
-| **配置** | `.gitignore` | 25 | ✅ 完成 |
-| **配置** | `README.md` | 35 | ✅ 完成 |
-| **合计** | 19 个源文件 | ~4,789 行 | ✅ |
-
-### 1.2 功能覆盖
-
-| 功能模块 | 设计范围 | 实现状态 | 备注 |
-|---------|---------|---------|------|
-| 多格式媒体导入 | ✅ | ✅ | Files + URL 导入，15 种格式 |
-| AVPlayer 播放 | ✅ | ✅ | 默认播放器，基础格式支持 |
-| VLCKit 播放 | ✅ | ⚠️ 注释态 | 代码已写，需 pod install 后激活 |
-| WhisperKit 初始化 | ✅ | ✅ | App 启动异步预热 |
-| 音频提取（WAV 16kHz）| ✅ | ✅ | AVAssetReader pipeline |
-| 语音转写（带时间戳）| ✅ | ✅ | WhisperKit 10 个模型可选 |
-| 转写进度显示 | ✅ | ⚠️ 部分 | 状态文字更新，百分比始终 0% |
-| 播放↔字幕实时同步 | ✅ | ✅ | Combine throttle 200ms |
-| 字幕面板高亮+滚动 | ✅ | ✅ | ScrollViewReader 自动定位 |
-| Claude API 对话 | ✅ | ✅ | system 参数独立 |
-| OpenAI API 对话 | ✅ | ✅ | 兼容 OpenAI-compatible 接口 |
-| Ollama 本地对话 | ✅ | ✅ | localhost:11434 |
-| 快捷操作（总结/翻译）| ✅ | ✅ | 4 个预设操作 |
-| 媒体库搜索+排序 | ✅ | ✅ | 5 种排序方式 |
-| 转写稿导出（Markdown）| ✅ | ✅ | UIActivityViewController |
-| 横竖屏自适应布局 | ✅ | ✅ | GeometryReader 55/45 分割 |
-| 设置页（API/模型）| ✅ | ✅ | 18 种语言，10 种 Whisper 模型 |
-| 后台播放 | ✅ | ✅ | AVAudioSession + Info.plist |
-| 转写持久化（重启后）| ✅（设计）| ❌ 未完成 | 见技术债 #1 |
-| API Key 安全存储 | ⚠️（UserDefaults）| ❌ 未完成 | 见技术债 #4 |
-| 流式响应 | ✅（设计）| ❌ 未做 | v1.1.0 |
-| Token 截断 | ✅（设计）| ❌ 未做 | v1.1.0 |
+| 功能 | 状态 | Commit |
+|------|------|--------|
+| 项目框架（SwiftUI、MVVM、AppState DI） | ✅ 完成 | d6a1814 |
+| MobileVLCKit 3.7 CocoaPods 集成 | ✅ 完成 | 8f5e0c7 |
+| WhisperKit 0.18 SPM 集成 | ✅ 完成 | 8f5e0c7 |
+| AVMediaPlayerService 备用播放器 | ✅ 完成 | d6a1814 |
+| VLCPlayerService + VLCVideoRepresentable | ✅ 完成 | 8f5e0c7 |
+| TranscriptionService（WhisperKit 封装） | ✅ 完成 | d6a1814 |
+| 实时转录进度回调（WindowId 估算） | ✅ 完成 | 25cdca9 |
+| 音频提取（AVAssetReader → 16kHz WAV） | ✅ 完成 | d6a1814 |
+| MediaLibraryService（导入、缩略图、持久化） | ✅ 完成 | d6a1814 |
+| ChatService — Claude / OpenAI / Ollama | ✅ 完成 | d6a1814 |
+| 流式 SSE 响应（三种后端） | ✅ 完成 | 25cdca9 |
+| API 密钥 → iOS Keychain（KeychainService） | ✅ 完成 | 25cdca9 |
+| 长文本 Token 截断（80k 上限） | ✅ 完成 | 25cdca9 |
+| 转录结果持久化到媒体库 | ✅ 完成 | 25cdca9 |
+| PlayerView 转录面板（实时字幕同步） | ✅ 完成 | d6a1814 |
+| LibraryView（搜索、排序、滑动删除） | ✅ 完成 | d6a1814 |
+| ChatView（流式气泡、快捷操作） | ✅ 完成 | d6a1814 |
+| SettingsView（API 配置、转录偏好） | ✅ 完成 | d6a1814 |
+| ContentView 齿轮按钮（设置入口） | ✅ 完成 | 25cdca9 |
+| Xcode 工程生成（project.yml / xcodegen） | ✅ 完成 | 8f5e0c7 |
+| WhisperKit API 兼容性修复（v0.18） | ✅ 完成 | 8f5e0c7 |
+| MobileVLCKit API 修复（parse(options:)） | ✅ 完成 | 8f5e0c7 |
+| 简体中文本地化（zh-Hans） | ✅ 完成 | d86d238 |
+| WhisperKit 模型下载与管理 UI | ✅ 完成 | aec0fe9 |
 
 ---
 
-## 二、技术债追踪
+## 二、功能矩阵
 
-### P0 — 阻断性问题（上线前必须修复）
-
-#### TD-001：转写结果未持久化
-- **文件**：`PlayerViewModel.swift:startTranscription()`
-- **现象**：转写完成后关闭 App，下次打开转写结果消失
-- **根因**：`updatedItem` 只更新了 `viewModel.mediaItem`，未调用 `mediaLibraryService.updateItem()`
-- **修复**：
-  ```swift
-  // PlayerViewModel.swift — startTranscription() 中，transcript 写入后添加：
-  await appState.mediaLibraryService.updateItem(updatedItem)
-  // 需要将 mediaLibraryService 注入 PlayerViewModel
-  ```
-
-#### TD-002：PlayerView 转写完成后面板不刷新
-- **文件**：`PlayerView.swift:transcriptPanel`
-- **现象**：转写成功，但面板仍显示"Ready to Transcribe"
-- **根因**：`transcriptPanel` 读取的是 `let mediaItem`（init 参数，不可变），而非 `viewModel.mediaItem`
-- **修复**：将 `transcriptPanel` 中所有 `mediaItem.transcript` 替换为 `viewModel.mediaItem?.transcript`
-
-### P1 — 高优先级（v1.0.1 内修复）
-
-#### TD-003：WhisperKit 进度始终 0%
-- **文件**：`TranscriptionService.swift:transcribe(audioURL:)`
-- **现象**：转写过程中进度条文字始终为 "Transcribing... 0%"
-- **修复**：使用 WhisperKit `DecodingOptions` 的进度回调（`progressCallback`）更新 state
-
-#### TD-006：VLCKit 未激活
-- **文件**：`MediaPlayerService.swift`（注释块）
-- **步骤**：
-  1. `pod install`（需 macOS + CocoaPods 1.4+）
-  2. 取消 `VLCPlayerService` 类的注释
-  3. `PlayerViewModel` 中将 `AVMediaPlayerService()` 替换为 `VLCPlayerService()`
-  4. 添加 `import MobileVLCKit`
-
-#### TD-007：SettingsView 无入口
-- **文件**：`ContentView.swift`
-- **现象**：`showSettings` state 声明但无按钮触发
-- **修复**：在 TabView 的 `toolbar` 上添加齿轮按钮
-
-### P2 — 中优先级（v1.1.0）
-
-#### TD-004：API Key 明文存储
-- **文件**：`SettingsView.swift` `@AppStorage("api_key")`
-- **修复**：使用 `Security.framework` 的 `SecItemAdd` / `SecItemCopyMatching`
-
-#### TD-005：超长转写稿无 Token 截断
-- **文件**：`ChatService.swift:buildSystemContext()`
-- **现象**：1 小时视频约 3000 段转写 ≈ 15 万字符 ≈ 3.7 万 tokens，可能超出 LLM 上限
-- **修复**：参见 `02-VoiceTok-Coding-Patterns-TaskGuide.md` Task F 代码示例
+| 模块 | 已实现内容 | 备注 |
+|------|-----------|------|
+| **播放** | VLCKit（100+ 格式）+ AVPlayer 备用 | `#if canImport(MobileVLCKit)` 切换 |
+| **转录** | WhisperKit 本地，10 种模型，词级时间戳 | 设备端 Neural Engine |
+| **模型管理** | 下载、切换、删除、进度 UI | 缓存在 `Documents/huggingface/` |
+| **AI 对话** | Claude（流式）、OpenAI（流式）、Ollama | SSE + 非流式回退 |
+| **媒体库** | 导入文件/链接，搜索，5 种排序 | JSON 存 UserDefaults |
+| **安全** | API 密钥存 Keychain | `kSecAttrAccessibleAfterFirstUnlock` |
+| **本地化** | 英语 + 简体中文 | `zh-Hans.lproj`，~100 条字符串 |
 
 ---
 
-## 三、开发路线图
+## 三、已解决的技术债务
 
-### v1.0.1 — 紧急修复（目标：2026-04 内）
+初始审计发现的 7 项 P0/P1/P2 问题已全部关闭：
 
-```
-修复 TD-001  转写持久化
-修复 TD-002  PlayerView 绑定刷新
-修复 TD-003  WhisperKit 进度回调
-修复 TD-006  VLCKit 激活
-修复 TD-007  Settings 入口
+| ID | 问题 | 修复方案 | Commit |
+|----|------|---------|--------|
+| TD-001 | 转录结果不保存 | PlayerViewModel 调用 `mediaLibraryService.updateItem()` | 25cdca9 |
+| TD-002 | PlayerView 使用不可变 `let mediaItem` | 改读 `viewModel.mediaItem` | 25cdca9 |
+| TD-003 | WhisperKit 无进度回调 | `TranscriptionCallback` 通过 `windowId` 估算 | 25cdca9 |
+| TD-004 | API 密钥明文存 UserDefaults | 迁移到 `KeychainService` | 25cdca9 |
+| TD-005 | 长转录无 Token 截断 | `buildSystemContext()` 80k 上限 + 截断提示 | 25cdca9 |
+| TD-006 | VLCKit 被注释掉无法编译 | `#if canImport(MobileVLCKit)` 条件编译 | 25cdca9 |
+| TD-007 | 无设置入口 | ContentView 工具栏齿轮按钮 | 25cdca9 |
+
+---
+
+## 四、当前已知局限
+
+| 问题 | 影响 | 计划 |
+|------|------|------|
+| WhisperKit 模拟器为 CPU 模式 | 模拟器转录慢 | 预期行为，Neural Engine 仅真机 |
+| 大模型下载需要 Wi-Fi | 用户体验 | 下载前显示大小警告（v1.1） |
+| 转录文件不同步 iCloud | 重装丢数据 | v1.1 目标 |
+| VLCKit 仅支持 `-iphonesimulator` 构建 | 模拟器调试限制 | CocoaPods XCFramework 特性 |
+
+---
+
+## 五、路线图
+
+### v1.1 — 云同步与分享
+- [ ] iCloud Drive 同步转录 JSON 文件
+- [ ] Share Sheet 扩展 — 从任意 App 触发转录
+- [ ] 导出格式：SRT 字幕、JSON、纯文本
+- [ ] 说话人分离（多说话人检测）
+
+### v1.2 — 集成扩展
+- [ ] 直接导入 YouTube / 播客流 URL
+- [ ] Siri 快捷指令："转录最新导入"
+- [ ] 主屏小组件：当前播放 + 快速转录
+- [ ] CarPlay 音频支持
+
+### v2.0 — 多平台
+- [ ] iPad 多列布局（视频 + 转录 + 对话同屏）
+- [ ] macOS（Catalyst）支持，含菜单栏控制
+- [ ] 批量转录队列 + 后台处理
+- [ ] 每条媒体独立配置 AI 系统提示词
+- [ ] 领域词汇 Whisper 微调模型支持
+
+---
+
+## 六、构建说明
+
+```bash
+git clone https://github.com/ViffyGwaanl/VoiceAiTok.git && cd VoiceAiTok
+pod install                        # 安装 MobileVLCKit 3.7
+open VoiceTok.xcworkspace         # WhisperKit SPM 自动解析
+# Xcode：设置 Development Team → 连接 iPhone → ⌘R
 ```
 
-**验收标准**：
-- 转写后关闭 App 重启，转写结果仍然可见
-- 转写完成后不需要重新选择文件即可看到字幕
-- 转写进度实时更新（10% → 50% → 100%）
-- MKV / AVI 文件可正常播放
+**xcodegen**（如需从 project.yml 重新生成 .xcodeproj）：
+```bash
+brew install xcodegen && xcodegen generate && pod install
+```
+
+**模拟器构建（无需签名）：**
+```bash
+xcodebuild build -workspace VoiceTok.xcworkspace -scheme VoiceTok \
+  -destination "platform=iOS Simulator,name=iPhone 17 Pro" \
+  CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO
+```
 
 ---
 
-### v1.1.0 — 安全与体验（目标：2026-Q2）
+## 七、依赖版本表
 
-**功能**：
-- [ ] API Key 迁移 Keychain
-- [ ] Token 截断（80k token 上限 + 尾部 "... [截断]" 提示）
-- [ ] Claude / OpenAI 流式响应（实时打字机输出）
-- [ ] 单元测试套件（TranscriptSegment / ChatService / PlayerViewModel）
-
-**测试目标**：核心逻辑覆盖率 ≥ 60%
-
----
-
-### v1.2.0 — 功能扩展（目标：2026-Q3）
-
-**功能**：
-- [ ] **实时转写**：麦克风实时输入 → WhisperKit streaming → 字幕同步
-- [ ] **字幕导出**：SRT / VTT / LRC 三种格式
-- [ ] **网络流媒体**：VLCKit 播放 HLS / RTSP 流地址 + 网络缓存优化
-- [ ] **批量转写队列**：多文件后台排队转写（OperationQueue）
-- [ ] **多语言 UI**：App 界面中英双语（LocalizedString）
-
----
-
-### v2.0.0 — 平台拓展（目标：2027）
-
-**功能**：
-- [ ] **Speaker Diarization**：`speakerLabel` 字段激活（Argmax Pro SDK）
-- [ ] **RAG 上下文注入**：超长转写稿按语义检索相关片段注入 LLM，突破 token 限制
-- [ ] **iCloud Drive 同步**：转写稿 + 对话历史跨设备
-- [ ] **macOS / Catalyst**：SwiftUI multiplatform 适配
-- [ ] **App Intents**：Siri Shortcuts 集成（「总结 VoiceTok 最近一个视频」）
-- [ ] **watchOS 伴侣**：播放控制 + 转写进度 Mini
-
----
-
-## 四、依赖与版本锁定
-
-| 依赖 | 当前版本 | 引入方式 | 上次验证 |
-|------|---------|---------|---------|
-| MobileVLCKit | ~3.6 | CocoaPods | 2026-04-01 |
-| WhisperKit | ≥0.9.0 | SPM | 2026-04-01 |
-| Xcode | 15+ | 系统 | — |
-| CocoaPods | 1.4+ | gem | — |
-| iOS Deployment Target | 17.0 | Build Settings | — |
-
----
-
-## 五、已知外部限制
-
-| 限制 | 说明 |
-|------|------|
-| WhisperKit 模型首次需联网 | 下载后缓存于 `~/Library/Caches/huggingface/` |
-| WhisperKit 模拟器极慢 | Neural Engine 不可用，仅用于 UI 调试 |
-| MobileVLCKit 包体积 | 约 30-50MB，增加 App 包体积 |
-| VLCKit 不支持 SPM | 必须 CocoaPods，不可替代 |
-| Claude API context window | claude-sonnet-4: ~200k tokens（目前足够，极长视频除外）|
-| Ollama 需同 Wi-Fi | iOS 通过 NSAllowsLocalNetworking 访问 Mac 上 Ollama |
-
----
-
-*本文档为 VoiceTok 项目工程状态的权威追踪来源。每次 milestone 完成后应同步更新。*
+| 包 | 版本 | 来源 |
+|----|------|------|
+| MobileVLCKit | 3.7.3 | CocoaPods |
+| WhisperKit | 0.18.0 | SPM (argmaxinc/WhisperKit) |
+| swift-transformers | 1.1.9 | SPM（传递依赖） |
+| swift-crypto | 4.3.1 | SPM（传递依赖） |
+| Xcode | 16+ | 必需 |
+| iOS Deployment Target | 17.0 | 最低版本 |
