@@ -1,8 +1,8 @@
 # VoiceTok — 项目状态与开发路线图
 
 > **文档类型**：工程状态追踪 + 产品路线图
-> **最后更新**：2026-04-01
-> **当前版本**：v1.0.0（5 commits，BUILD SUCCEEDED ✅）
+> **最后更新**：2026-04-02
+> **当前版本**：v1.0.0（Build 8，多供应商转录 + Bug 修复）
 > **仓库**：https://github.com/ViffyGwaanl/VoiceAiTok
 
 ---
@@ -18,25 +18,28 @@
 | WhisperKit 0.18 SPM 集成 | ✅ 完成 | 8f5e0c7 |
 | AVMediaPlayerService 备用播放器 | ✅ 完成 | d6a1814 |
 | VLCPlayerService + VLCVideoRepresentable | ✅ 完成 | 8f5e0c7 |
-| TranscriptionService（WhisperKit 封装） | ✅ 完成 | d6a1814 |
+| TranscriptionService — WhisperKit 本地转录 | ✅ 完成 | d6a1814 |
+| TranscriptionService — Apple SFSpeechRecognizer | ✅ 完成 | 当前 |
+| TranscriptionService — OpenAI Whisper API | ✅ 完成 | 当前 |
+| 多供应商路由（TranscriptionProvider 枚举） | ✅ 完成 | 当前 |
+| WhisperKit 时间戳 Token 过滤（`<|6.00|>`） | ✅ 完成 | 当前 |
+| 播放器内转录设置面板（供应商/模型/语言） | ✅ 完成 | 当前 |
+| 转录后 Chat 标签页内容消失 Bug 修复 | ✅ 完成 | 当前 |
 | 实时转录进度回调（WindowId 估算） | ✅ 完成 | 25cdca9 |
 | 音频提取（AVAssetReader → 16kHz WAV） | ✅ 完成 | d6a1814 |
+| AVLinearPCMIsNonInterleaved 真机崩溃修复 | ✅ 完成 | 5559bcf |
 | MediaLibraryService（导入、缩略图、持久化） | ✅ 完成 | d6a1814 |
-| ChatService — Claude / OpenAI / Ollama | ✅ 完成 | d6a1814 |
-| 流式 SSE 响应（三种后端） | ✅ 完成 | 25cdca9 |
-| API 密钥 → iOS Keychain（KeychainService） | ✅ 完成 | 25cdca9 |
+| ChatService — Claude / OpenAI / Ollama 流式 | ✅ 完成 | d6a1814 |
+| AI 供应商多供应商管理（无限添加） | ✅ 完成 | 93a3d8c |
+| 模型自动获取 + API Key 测试 | ✅ 完成 | 93a3d8c |
+| ChatView — 复制/重生成/停止/供应商标签 | ✅ 完成 | 9e27f15 |
+| API 密钥 → iOS Keychain | ✅ 完成 | 25cdca9 |
 | 长文本 Token 截断（80k 上限） | ✅ 完成 | 25cdca9 |
-| 转录结果持久化到媒体库 | ✅ 完成 | 25cdca9 |
-| PlayerView 转录面板（实时字幕同步） | ✅ 完成 | d6a1814 |
-| LibraryView（搜索、排序、滑动删除） | ✅ 完成 | d6a1814 |
-| ChatView（流式气泡、快捷操作） | ✅ 完成 | d6a1814 |
-| SettingsView（API 配置、转录偏好） | ✅ 完成 | d6a1814 |
-| ContentView 齿轮按钮（设置入口） | ✅ 完成 | 25cdca9 |
-| Xcode 工程生成（project.yml / xcodegen） | ✅ 完成 | 8f5e0c7 |
-| WhisperKit API 兼容性修复（v0.18） | ✅ 完成 | 8f5e0c7 |
-| MobileVLCKit API 修复（parse(options:)） | ✅ 完成 | 8f5e0c7 |
-| 简体中文本地化（zh-Hans） | ✅ 完成 | d86d238 |
-| WhisperKit 模型下载与管理 UI | ✅ 完成 | aec0fe9 |
+| WhisperKit 模型下载、切换、删除 UI | ✅ 完成 | aec0fe9 |
+| 媒体库搜索、排序、滑动删除 | ✅ 完成 | d6a1814 |
+| 转录导出（Markdown） | ✅ 完成 | 9e27f15 |
+| 简体中文本地化（zh-Hans，~110 条） | ✅ 完成 | d86d238 |
+| 设置页内 NavigationStack 工具栏齿轮按钮 | ✅ 完成 | 44b13ba |
 
 ---
 
@@ -45,18 +48,16 @@
 | 模块 | 已实现内容 | 备注 |
 |------|-----------|------|
 | **播放** | VLCKit（100+ 格式）+ AVPlayer 备用 | `#if canImport(MobileVLCKit)` 切换 |
-| **转录** | WhisperKit 本地，10 种模型，词级时间戳 | 设备端 Neural Engine |
-| **模型管理** | 下载、切换、删除、进度 UI | 缓存在 `Documents/huggingface/` |
-| **AI 对话** | Claude（流式）、OpenAI（流式）、Ollama | SSE + 非流式回退 |
+| **转录** | WhisperKit（本地）/ Apple Speech（本地）/ OpenAI API（云端） | 播放器内可切换 |
+| **模型管理** | 下载、切换、删除、进度 UI | WhisperKit 缓存于 `Documents/huggingface/` |
+| **AI 对话** | Claude（流式）、OpenAI（流式）、Ollama、OpenAI 兼容 | SSE + 非流式回退 |
 | **媒体库** | 导入文件/链接，搜索，5 种排序 | JSON 存 UserDefaults |
 | **安全** | API 密钥存 Keychain | `kSecAttrAccessibleAfterFirstUnlock` |
-| **本地化** | 英语 + 简体中文 | `zh-Hans.lproj`，~100 条字符串 |
+| **本地化** | 英语 + 简体中文 | `zh-Hans.lproj`，~110 条字符串 |
 
 ---
 
-## 三、已解决的技术债务
-
-初始审计发现的 7 项 P0/P1/P2 问题已全部关闭：
+## 三、已解决的技术债务与 Bug
 
 | ID | 问题 | 修复方案 | Commit |
 |----|------|---------|--------|
@@ -67,6 +68,10 @@
 | TD-005 | 长转录无 Token 截断 | `buildSystemContext()` 80k 上限 + 截断提示 | 25cdca9 |
 | TD-006 | VLCKit 被注释掉无法编译 | `#if canImport(MobileVLCKit)` 条件编译 | 25cdca9 |
 | TD-007 | 无设置入口 | ContentView 工具栏齿轮按钮 | 25cdca9 |
+| TD-008 | 真机崩溃：AVLinearPCMIsNonInterleaved | 分离 readerSettings/writerSettings | 5559bcf |
+| TD-009 | AI 供应商设置退出后丢失 | 改用 providerID 引用，onAppear 重读 | 44b13ba |
+| TD-010 | 转录成功后切 Chat 标签页内容消失 | `onTranscriptReady` 回调更新 `appState.activeMediaItem` | 当前 |
+| TD-011 | WhisperKit 时间戳 Token 污染转录文本 | `stripTimestampTokens` 正则过滤 `<\|[\d.]+\|>` | 当前 |
 
 ---
 
@@ -77,7 +82,8 @@
 | WhisperKit 模拟器为 CPU 模式 | 模拟器转录慢 | 预期行为，Neural Engine 仅真机 |
 | 大模型下载需要 Wi-Fi | 用户体验 | 下载前显示大小警告（v1.1） |
 | 转录文件不同步 iCloud | 重装丢数据 | v1.1 目标 |
-| VLCKit 仅支持 `-iphonesimulator` 构建 | 模拟器调试限制 | CocoaPods XCFramework 特性 |
+| Apple Speech 无逐段时间戳（按词分块） | 时间轴不如 WhisperKit 精准 | 可接受，SFSpeechRecognizer 能力限制 |
+| OpenAI API 上传大文件耗时较长 | 体验 | 可考虑切片上传（v1.2） |
 
 ---
 

@@ -10,9 +10,11 @@ struct PlayerView: View {
     let chatService: ChatService
     let mediaLibraryService: MediaLibraryService
 
+    @EnvironmentObject private var appState: AppState
     @StateObject private var viewModel: PlayerViewModel
     @State private var showModelPicker = false
     @State private var selectedModel = "base"
+    @State private var showTranscriptionSettings = false
 
     init(mediaItem: MediaItem, transcriptionService: TranscriptionService, chatService: ChatService, mediaLibraryService: MediaLibraryService) {
         self.mediaItem = mediaItem
@@ -55,9 +57,10 @@ struct PlayerView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
-                        Button(action: { showModelPicker = true }) {
-                            Label("Select Model", systemImage: "cpu")
+                        Button(action: { showTranscriptionSettings = true }) {
+                            Label("Transcription Settings", systemImage: "waveform.and.mic")
                         }
+                        Divider()
                         if !viewModel.hasTranscript {
                             Button(action: { Task { await viewModel.startTranscription() } }) {
                                 Label("Transcribe", systemImage: "waveform.badge.mic")
@@ -76,20 +79,20 @@ struct PlayerView: View {
                     }
                 }
             }
-            .confirmationDialog("Select Whisper Model", isPresented: $showModelPicker) {
-                ForEach(TranscriptionService.fallbackModels, id: \.self) { model in
-                    Button(model) {
-                        selectedModel = model
-                        Task {
-                            try? await transcriptionService.switchModel(to: model)
-                            await viewModel.startTranscription()
-                        }
-                    }
-                }
-                Button("Cancel", role: .cancel) {}
-            }
             .task {
+                // Wire callback so Chat tab can see the transcript after transcription
+                viewModel.onTranscriptReady = { updatedItem in
+                    appState.activeMediaItem = updatedItem
+                }
+                selectedModel = transcriptionService.config.modelName
                 await viewModel.loadMedia(mediaItem)
+            }
+            .sheet(isPresented: $showTranscriptionSettings) {
+                TranscriptionSettingsSheet(
+                    transcriptionService: transcriptionService,
+                    selectedModel: $selectedModel
+                )
+                .environmentObject(appState)
             }
         }
     }
@@ -448,5 +451,149 @@ struct TranscriptSegmentRow: View {
         }
         .padding(.vertical, 4)
         .animation(.easeInOut(duration: 0.2), value: isActive)
+    }
+}
+
+// MARK: - Transcription Settings Sheet
+struct TranscriptionSettingsSheet: View {
+    let transcriptionService: TranscriptionService
+    @Binding var selectedModel: String
+    @EnvironmentObject private var appState: AppState
+    @Environment(\.dismiss) private var dismiss
+
+    // Local copies for editing
+    @State private var provider: TranscriptionProvider = .whisperKit
+    @State private var model: String = "base"
+    @State private var language: String = ""
+    @State private var openAIKey: String = ""
+    @State private var isSwitchingModel = false
+
+    private let languages: [(code: String, name: String)] = [
+        ("", "Auto-detect"),
+        ("en", "English"), ("zh", "Chinese"), ("ja", "Japanese"),
+        ("ko", "Korean"), ("fr", "French"), ("de", "German"),
+        ("es", "Spanish"), ("it", "Italian"), ("pt", "Portuguese"),
+        ("ru", "Russian"), ("ar", "Arabic"), ("hi", "Hindi")
+    ]
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                // Provider picker
+                Section {
+                    Picker("Provider", selection: $provider) {
+                        ForEach(TranscriptionProvider.allCases, id: \.self) { p in
+                            Text(p.displayName).tag(p)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                } header: {
+                    Text("Transcription Provider")
+                } footer: {
+                    Text(provider.description)
+                        .font(.caption)
+                }
+
+                // WhisperKit model picker
+                if provider == .whisperKit {
+                    Section("Model") {
+                        if isSwitchingModel {
+                            HStack {
+                                ProgressView()
+                                Text("Loading model...")
+                                    .foregroundStyle(.secondary)
+                            }
+                        } else {
+                            Picker("Model", selection: $model) {
+                                ForEach(
+                                    transcriptionService.availableModels.isEmpty
+                                        ? TranscriptionService.fallbackModels
+                                        : transcriptionService.availableModels,
+                                    id: \.self
+                                ) { m in
+                                    Text(m).tag(m)
+                                }
+                            }
+                            .pickerStyle(.menu)
+
+                            if let size = TranscriptionService.estimatedSizeOptional(for: model) {
+                                Text("Estimated size: \(size)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                // OpenAI API key (when OpenAI API selected)
+                if provider == .openAIAPI {
+                    Section("OpenAI API Key") {
+                        SecureField("sk-...", text: $openAIKey)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                        Text("Used only for audio transcription. Kept on device.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+
+                // Language picker
+                Section("Language") {
+                    Picker("Language", selection: $language) {
+                        ForEach(languages, id: \.code) { lang in
+                            Text(lang.name).tag(lang.code)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                }
+            }
+            .navigationTitle("Transcription Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { saveAndDismiss() }
+                }
+            }
+            .onAppear { loadCurrentSettings() }
+        }
+    }
+
+    private func loadCurrentSettings() {
+        provider = transcriptionService.config.provider
+        model = transcriptionService.config.modelName
+        language = transcriptionService.config.language ?? ""
+        openAIKey = transcriptionService.config.openAIAPIKey ?? ""
+
+        // Pre-populate OpenAI key from existing AI provider if not set
+        if openAIKey.isEmpty,
+           let openAIProvider = appState.aiProviderService.providers.first(where: { $0.type == .openai }) {
+            let key = appState.aiProviderService.apiKey(for: openAIProvider)
+            if !key.isEmpty { openAIKey = key }
+        }
+    }
+
+    private func saveAndDismiss() {
+        let langValue: String? = language.isEmpty ? nil : language
+        let keyValue: String? = openAIKey.isEmpty ? nil : openAIKey
+
+        transcriptionService.config.provider = provider
+        transcriptionService.config.language = langValue
+        transcriptionService.config.openAIAPIKey = keyValue
+
+        if provider == .whisperKit && model != transcriptionService.config.modelName {
+            transcriptionService.config.modelName = model
+            selectedModel = model
+            isSwitchingModel = true
+            Task {
+                try? await transcriptionService.switchModel(to: model)
+                isSwitchingModel = false
+                dismiss()
+            }
+        } else {
+            dismiss()
+        }
     }
 }

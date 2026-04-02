@@ -1,8 +1,8 @@
 # VoiceTok
 
-**AI-powered iOS media player with on-device transcription and AI chat.**
+**AI-powered iOS media player with multi-provider transcription and AI chat.**
 
-Import any audio or video file → WhisperKit transcribes it on-device → chat with Claude/OpenAI/Ollama about the content.
+Import any audio or video file → choose a transcription provider → chat with Claude/OpenAI/Ollama about the content.
 
 ---
 
@@ -11,10 +11,14 @@ Import any audio or video file → WhisperKit transcribes it on-device → chat 
 | Feature | Status |
 |---------|--------|
 | Universal media playback (100+ formats via VLCKit) | ✅ |
-| On-device speech-to-text (WhisperKit / Apple Neural Engine) | ✅ |
+| On-device transcription — WhisperKit (Neural Engine) | ✅ |
+| On-device transcription — Apple SFSpeechRecognizer (no download) | ✅ |
+| Cloud transcription — OpenAI Whisper API | ✅ |
 | Real-time transcription progress with word-level timestamps | ✅ |
-| AI chat about transcribed content (Claude, OpenAI, Ollama) | ✅ |
+| Transcription provider/model/language picker in Player UI | ✅ |
+| AI chat about transcribed content (Claude, OpenAI, Ollama, OpenAI-compatible) | ✅ |
 | Streaming AI responses (SSE) | ✅ |
+| Multi-provider AI settings (add unlimited providers) | ✅ |
 | WhisperKit model download & management UI | ✅ |
 | Media library with search, sort, thumbnail generation | ✅ |
 | Transcript export (Markdown) | ✅ |
@@ -30,7 +34,7 @@ Import any audio or video file → WhisperKit transcribes it on-device → chat 
 |-------|-----------|-------|
 | UI | SwiftUI (iOS 17+) | MVVM, dark mode |
 | Media Playback | MobileVLCKit 3.7 (CocoaPods) | 100+ formats |
-| Transcription | WhisperKit 0.18 (SPM) | Local, Neural Engine |
+| Transcription | WhisperKit 0.18 (SPM) + SFSpeechRecognizer + OpenAI API | Three providers |
 | AI Chat | Claude API / OpenAI API / Ollama | Streaming SSE |
 | Persistence | UserDefaults JSON + iOS Keychain | Library + API keys |
 | Architecture | MVVM + Service Layer | AppState DI container |
@@ -91,7 +95,7 @@ VoiceTok/
 ├── Services/
 │   ├── MediaLibraryService.swift # Import, thumbnail, persistence
 │   ├── MediaPlayerService.swift  # VLCPlayerService + AVMediaPlayerService
-│   ├── TranscriptionService.swift# WhisperKit wrapper + model management
+│   ├── TranscriptionService.swift# Multi-provider: WhisperKit / Apple Speech / OpenAI API
 │   ├── ChatService.swift         # Claude/OpenAI/Ollama + SSE streaming
 │   └── KeychainService.swift     # Secure API key storage
 ├── ViewModels/
@@ -99,11 +103,13 @@ VoiceTok/
 ├── Views/
 │   ├── ContentView.swift         # TabView shell
 │   ├── Library/LibraryView.swift # Media library (search, sort, import)
-│   ├── Player/PlayerView.swift   # Player + transcript panel
-│   ├── Chat/ChatView.swift       # AI chat (streaming, quick actions)
+│   ├── Player/PlayerView.swift   # Player + transcript panel + TranscriptionSettingsSheet
+│   ├── Chat/ChatView.swift       # AI chat (streaming, copy, regenerate, stop)
 │   └── Settings/
-│       ├── SettingsView.swift    # Settings form
-│       └── ModelManagementView.swift # WhisperKit model download UI
+│       ├── SettingsView.swift           # Global settings
+│       ├── AIProviderListView.swift     # Manage AI providers list
+│       ├── AIProviderDetailView.swift   # Add/edit provider (model fetch, key test)
+│       └── ModelManagementView.swift    # WhisperKit model download UI
 ├── Extensions/Extensions.swift  # View/Color/URL/Time helpers
 └── Resources/
     ├── Info.plist
@@ -114,30 +120,43 @@ VoiceTok/
 
 **Key design decisions:**
 - `AppState` as single `@StateObject` at root — all services injected via `@EnvironmentObject`
+- `TranscriptionProvider` enum routes `transcribeMedia(at:)` to WhisperKit / Apple Speech / OpenAI API
+- `PlayerViewModel.onTranscriptReady` callback propagates transcript to `appState.activeMediaItem` so the Chat tab unlocks immediately after transcription
+- WhisperKit timestamp tokens (`<|6.00|>`) stripped via regex before building `TranscriptSegment`
 - `#if canImport(MobileVLCKit)` conditional compilation — app builds with AVPlayer fallback if VLCKit absent
-- WhisperKit audio extraction: `AVAssetReader` → 16kHz mono PCM WAV (WhisperKit requirement)
 - Chat context: transcript injected as system message, token-truncated at ~80k tokens
 
 ---
 
-## Configuration
+## Transcription Providers
 
-### AI Chat
-Open **Settings → AI Chat API** and configure:
+Access via **Player → ⋯ → Transcription Settings**
+
+| Provider | Model | Notes |
+|----------|-------|-------|
+| **WhisperKit** | tiny / base / small / medium / large-v3 | On-device, Neural Engine, requires download |
+| **Apple Speech** | System | On-device, no download, iOS permission required |
+| **OpenAI API** | whisper-1 | Cloud, requires OpenAI API key |
+
+Language can be set to Auto-detect or pinned to any of 13 supported languages.
+
+---
+
+## AI Chat Configuration
+
+Open **Settings → AI Providers** and add or configure providers:
 
 | Field | Description |
 |-------|-------------|
-| Provider | Claude (Anthropic), OpenAI, or Ollama (local) |
+| Provider Type | Claude, OpenAI, Ollama, or OpenAI-compatible |
 | API Key | Stored securely in iOS Keychain |
-| Base URL | Custom endpoint for OpenAI-compatible APIs |
-| Model Name | e.g. `claude-sonnet-4-20250514`, `gpt-4o`, `llama3.2` |
+| Base URL | Custom endpoint for self-hosted / proxy APIs |
+| Model | Fetched live from provider, or entered manually |
+| Temperature / Top-P / Max Tokens | Per-provider tuning |
 
-### WhisperKit Models
-Open **Settings → WhisperKit Transcription → Model** to:
-- See the recommended model for your device
-- Download models directly in-app with progress indicator
-- Switch the active model
-- Delete cached models to free storage
+---
+
+## WhisperKit Models
 
 | Model | Size | Notes |
 |-------|------|-------|
@@ -151,9 +170,10 @@ Open **Settings → WhisperKit Transcription → Model** to:
 
 ## Roadmap
 
-### v1.1 (In Progress)
+### v1.1 (Next)
 - [ ] iCloud sync for transcripts and library metadata
 - [ ] Share extension (transcribe from Share Sheet)
+- [ ] SRT / JSON / plain-text export formats
 - [ ] Speaker diarization (multi-speaker detection)
 
 ### v1.2

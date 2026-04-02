@@ -23,6 +23,10 @@ final class PlayerViewModel: ObservableObject {
     @Published var showTranscript = true
     @Published var showChat = false
 
+    /// Called with the updated MediaItem (including transcript) after transcription succeeds.
+    /// Set from PlayerView where AppState is available.
+    var onTranscriptReady: ((MediaItem) -> Void)?
+
     private var cancellables = Set<AnyCancellable>()
 
     init(transcriptionService: TranscriptionService, chatService: ChatService, mediaLibraryService: MediaLibraryService) {
@@ -81,6 +85,9 @@ final class PlayerViewModel: ObservableObject {
             // Set up chat context
             chatService.setTranscript(transcript)
             transcriptionState = .completed
+
+            // Notify caller (PlayerView) so it can update AppState for the Chat tab
+            onTranscriptReady?(updatedItem)
 
         } catch {
             transcriptionState = .failed(error.localizedDescription)
