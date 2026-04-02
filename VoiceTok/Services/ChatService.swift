@@ -21,6 +21,7 @@ final class ChatService: ObservableObject {
         var modelName: String = "claude-sonnet-4-20250514"
         var maxTokens: Int = 2048
         var temperature: Double = 0.7
+        var topP: Double = 0.9
         var systemPrompt: String = AIProvider.defaultSystemPrompt
     }
 
@@ -40,6 +41,7 @@ final class ChatService: ObservableObject {
             modelName: provider.modelName,
             maxTokens: provider.maxTokens,
             temperature: provider.temperature,
+            topP: provider.topP,
             systemPrompt: provider.systemPrompt
         )
     }

@@ -178,3 +178,9 @@
 "Reset to Default" = "恢复默认";
 "Delete Provider" = "删除供应商";
 "Save" = "保存";
+"Fetch Models" = "获取模型列表";
+"Or enter custom model" = "或输入自定义模型";
+"Test API Key" = "测试 API 密钥";
+"Top P" = "Top P";
+"Temperature controls randomness (0=focused, 2=creative). Top P controls diversity of token selection." = "Temperature 控制随机性（0=专注，2=创意）。Top P 控制词元选择的多样性。";
+"Reset to Default" = "恢复默认";

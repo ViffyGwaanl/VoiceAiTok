@@ -66,6 +66,7 @@ struct AIProvider: Codable, Identifiable, Equatable {
     var baseURL: String
     var modelName: String
     var temperature: Double
+    var topP: Double
     var maxTokens: Int
     var systemPrompt: String
     var isBuiltIn: Bool
@@ -99,6 +100,7 @@ extension AIProvider {
         baseURL: AIProviderType.claude.defaultBaseURL,
         modelName: "claude-sonnet-4-20250514",
         temperature: 0.7,
+        topP: 0.9,
         maxTokens: 2048,
         systemPrompt: defaultSystemPrompt,
         isBuiltIn: true,
@@ -114,6 +116,7 @@ extension AIProvider {
         baseURL: AIProviderType.openai.defaultBaseURL,
         modelName: "gpt-4o-mini",
         temperature: 0.7,
+        topP: 0.9,
         maxTokens: 2048,
         systemPrompt: defaultSystemPrompt,
         isBuiltIn: true,
@@ -129,6 +132,7 @@ extension AIProvider {
         baseURL: AIProviderType.ollama.defaultBaseURL,
         modelName: "llama3.2",
         temperature: 0.7,
+        topP: 0.9,
         maxTokens: 2048,
         systemPrompt: defaultSystemPrompt,
         isBuiltIn: true,
@@ -205,6 +209,7 @@ final class AIProviderService: ObservableObject {
             baseURL: type.defaultBaseURL,
             modelName: type.defaultModel,
             temperature: 0.7,
+            topP: 0.9,
             maxTokens: 2048,
             systemPrompt: AIProvider.defaultSystemPrompt,
             isBuiltIn: false,
@@ -249,6 +254,124 @@ final class AIProviderService: ObservableObject {
 
     func setAPIKey(_ key: String, for provider: AIProvider) {
         KeychainService.save(key: provider.keychainKey, value: key)
+    }
+
+    // MARK: - Model Fetching
+
+    /// Cached models per provider (in-memory + UserDefaults)
+    @Published var cachedModels: [UUID: [String]] = [:]
+
+    func getCachedModels(for provider: AIProvider) -> [String] {
+        if let cached = cachedModels[provider.id] { return cached }
+        // Try loading from UserDefaults
+        let key = "ai_models_cache_\(provider.id.uuidString)"
+        if let data = UserDefaults.standard.data(forKey: key),
+           let models = try? JSONDecoder().decode([String].self, from: data) {
+            cachedModels[provider.id] = models
+            return models
+        }
+        return []
+    }
+
+    func saveCachedModels(_ models: [String], for provider: AIProvider) {
+        cachedModels[provider.id] = models
+        let key = "ai_models_cache_\(provider.id.uuidString)"
+        if let data = try? JSONEncoder().encode(models) {
+            UserDefaults.standard.set(data, forKey: key)
+        }
+    }
+
+    /// Fetch models from the provider's API
+    func fetchModels(for provider: AIProvider) async throws -> [String] {
+        let key = apiKey(for: provider)
+        let base = provider.baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+
+        switch provider.type {
+        case .claude:
+            return try await fetchClaudeModels(baseURL: base, apiKey: key)
+        case .openai, .openaiCompatible:
+            return try await fetchOpenAIModels(baseURL: base, apiKey: key)
+        case .ollama:
+            return try await fetchOllamaModels(baseURL: base)
+        }
+    }
+
+    private func fetchClaudeModels(baseURL: String, apiKey: String) async throws -> [String] {
+        let url = URL(string: "\(baseURL)/v1/models")!
+        var request = URLRequest(url: url)
+        request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
+            throw URLError(.badServerResponse)
+        }
+
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let items = json?["data"] as? [[String: Any]] ?? []
+        return items.compactMap { $0["id"] as? String }.sorted()
+    }
+
+    private func fetchOpenAIModels(baseURL: String, apiKey: String) async throws -> [String] {
+        let base = baseURL.isEmpty ? "https://api.openai.com" : baseURL
+        let url = URL(string: "\(base)/v1/models")!
+        var request = URLRequest(url: url)
+        if !apiKey.isEmpty {
+            request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        }
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
+            throw URLError(.badServerResponse)
+        }
+
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let items = json?["data"] as? [[String: Any]] ?? []
+        return items.compactMap { $0["id"] as? String }.sorted()
+    }
+
+    private func fetchOllamaModels(baseURL: String) async throws -> [String] {
+        let base = baseURL.isEmpty ? "http://localhost:11434" : baseURL
+        let url = URL(string: "\(base)/api/tags")!
+
+        let (data, response) = try await URLSession.shared.data(for: URLRequest(url: url))
+        guard let http = response as? HTTPURLResponse, 200..<300 ~= http.statusCode else {
+            throw URLError(.badServerResponse)
+        }
+
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let models = json?["models"] as? [[String: Any]] ?? []
+        return models.compactMap { $0["name"] as? String }.sorted()
+    }
+
+    /// Test API key by sending a minimal request
+    func testAPIKey(for provider: AIProvider) async throws -> Bool {
+        let key = apiKey(for: provider)
+        let base = provider.baseURL.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+
+        switch provider.type {
+        case .claude:
+            let url = URL(string: "\(base)/v1/models")!
+            var request = URLRequest(url: url)
+            request.setValue(key, forHTTPHeaderField: "x-api-key")
+            request.setValue("2023-06-01", forHTTPHeaderField: "anthropic-version")
+            let (_, response) = try await URLSession.shared.data(for: request)
+            return (response as? HTTPURLResponse)?.statusCode == 200
+
+        case .openai, .openaiCompatible:
+            let b = base.isEmpty ? "https://api.openai.com" : base
+            let url = URL(string: "\(b)/v1/models")!
+            var request = URLRequest(url: url)
+            request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+            let (_, response) = try await URLSession.shared.data(for: request)
+            return (response as? HTTPURLResponse)?.statusCode == 200
+
+        case .ollama:
+            let b = base.isEmpty ? "http://localhost:11434" : base
+            let url = URL(string: "\(b)/api/tags")!
+            let (_, response) = try await URLSession.shared.data(for: URLRequest(url: url))
+            return (response as? HTTPURLResponse)?.statusCode == 200
+        }
     }
 
     // MARK: - Migration from legacy settings

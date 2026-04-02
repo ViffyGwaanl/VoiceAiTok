@@ -1,5 +1,5 @@
 // AIProviderDetailView.swift
-// Per-provider settings: URL, model, key, temperature, system prompt
+// Per-provider settings: URL, model fetch/select, key test, parameters, system prompt
 
 import SwiftUI
 
@@ -12,6 +12,15 @@ struct AIProviderDetailView: View {
     @State private var showAPIKey = false
     @State private var showDeleteConfirm = false
     @State private var showSystemPromptEditor = false
+
+    // Model fetching
+    @State private var cachedModels: [String] = []
+    @State private var isFetchingModels = false
+    @State private var fetchError: String?
+
+    // API key testing
+    @State private var isTesting = false
+    @State private var testResult: Bool?
 
     private var service: AIProviderService { appState.aiProviderService }
     private var isSelected: Bool { service.selectedProviderID == provider.id }
@@ -59,13 +68,61 @@ struct AIProviderDetailView: View {
                     }
                 }
 
-                TextField("Model Name", text: $provider.modelName)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
+                // Model selection: dropdown if cached, text field otherwise
+                if cachedModels.isEmpty {
+                    TextField("Model Name", text: $provider.modelName)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                } else {
+                    Picker("Model", selection: $provider.modelName) {
+                        ForEach(cachedModels, id: \.self) { model in
+                            Text(model).tag(model)
+                        }
+                        if !cachedModels.contains(provider.modelName) && !provider.modelName.isEmpty {
+                            Text(provider.modelName + " (custom)").tag(provider.modelName)
+                        }
+                    }
+
+                    // Still allow manual input
+                    TextField("Or enter custom model", text: $provider.modelName)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .font(.caption)
+                }
+
+                // Fetch Models button
+                Button {
+                    Task { await fetchModels() }
+                } label: {
+                    HStack {
+                        if isFetchingModels {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Image(systemName: "arrow.down.circle")
+                        }
+                        Text("Fetch Models")
+                        Spacer()
+                        if !cachedModels.isEmpty {
+                            Text("\(cachedModels.count)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .disabled(isFetchingModels)
+
             } header: {
                 Label("Connection", systemImage: "network")
             } footer: {
-                modelSuggestions
+                VStack(alignment: .leading, spacing: 6) {
+                    if let error = fetchError {
+                        Text(error)
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    }
+                    modelSuggestions
+                }
             }
 
             // MARK: - API Key
@@ -88,6 +145,28 @@ struct AIProviderDetailView: View {
                         }
                         .buttonStyle(.plain)
                     }
+
+                    // Test API Key
+                    Button {
+                        Task { await testKey() }
+                    } label: {
+                        HStack {
+                            if isTesting {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else {
+                                Image(systemName: "checkmark.shield")
+                            }
+                            Text("Test API Key")
+                            Spacer()
+                            if let result = testResult {
+                                Image(systemName: result ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                    .foregroundStyle(result ? .green : .red)
+                            }
+                        }
+                    }
+                    .disabled(isTesting || apiKey.isEmpty)
+
                 } header: {
                     Label("Authentication", systemImage: "key")
                 } footer: {
@@ -97,6 +176,7 @@ struct AIProviderDetailView: View {
 
             // MARK: - Parameters
             Section {
+                // Temperature
                 HStack {
                     Text("Temperature")
                     Spacer()
@@ -107,6 +187,18 @@ struct AIProviderDetailView: View {
                 Slider(value: $provider.temperature, in: 0...2, step: 0.1)
                     .tint(.orange)
 
+                // Top P
+                HStack {
+                    Text("Top P")
+                    Spacer()
+                    Text(String(format: "%.2f", provider.topP))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 40)
+                }
+                Slider(value: $provider.topP, in: 0...1, step: 0.05)
+                    .tint(.orange)
+
+                // Max Tokens
                 HStack {
                     Text("Max Tokens")
                     Spacer()
@@ -117,6 +209,8 @@ struct AIProviderDetailView: View {
                 }
             } header: {
                 Label("Parameters", systemImage: "slider.horizontal.3")
+            } footer: {
+                Text("Temperature controls randomness (0=focused, 2=creative). Top P controls diversity of token selection.")
             }
 
             // MARK: - System Prompt
@@ -169,6 +263,7 @@ struct AIProviderDetailView: View {
         }
         .onAppear {
             apiKey = service.apiKey(for: provider)
+            cachedModels = service.getCachedModels(for: provider)
         }
         .onDisappear {
             saveProvider()
@@ -184,7 +279,7 @@ struct AIProviderDetailView: View {
         }
     }
 
-    // MARK: - Model Suggestions
+    // MARK: - Model Suggestions (quick presets)
 
     @ViewBuilder
     private var modelSuggestions: some View {
@@ -232,7 +327,38 @@ struct AIProviderDetailView: View {
         }
     }
 
-    // MARK: - Save
+    // MARK: - Actions
+
+    private func fetchModels() async {
+        isFetchingModels = true
+        fetchError = nil
+        // Save key first so fetch can use it
+        service.setAPIKey(apiKey, for: provider)
+        service.updateProvider(provider)
+
+        do {
+            let models = try await service.fetchModels(for: provider)
+            cachedModels = models
+            service.saveCachedModels(models, for: provider)
+        } catch {
+            fetchError = error.localizedDescription
+        }
+        isFetchingModels = false
+    }
+
+    private func testKey() async {
+        isTesting = true
+        testResult = nil
+        service.setAPIKey(apiKey, for: provider)
+        service.updateProvider(provider)
+
+        do {
+            testResult = try await service.testAPIKey(for: provider)
+        } catch {
+            testResult = false
+        }
+        isTesting = false
+    }
 
     private func saveProvider() {
         service.setAPIKey(apiKey, for: provider)
