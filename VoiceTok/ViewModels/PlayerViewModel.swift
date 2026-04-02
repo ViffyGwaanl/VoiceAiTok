@@ -7,9 +7,14 @@ import Combine
 @MainActor
 final class PlayerViewModel: ObservableObject {
     // MARK: - Dependencies
+    #if canImport(MobileVLCKit)
+    let player = VLCPlayerService()
+    #else
     let player = AVMediaPlayerService()
+    #endif
     let transcriptionService: TranscriptionService
     let chatService: ChatService
+    let mediaLibraryService: MediaLibraryService
 
     // MARK: - State
     @Published var mediaItem: MediaItem?
@@ -20,9 +25,10 @@ final class PlayerViewModel: ObservableObject {
 
     private var cancellables = Set<AnyCancellable>()
 
-    init(transcriptionService: TranscriptionService, chatService: ChatService) {
+    init(transcriptionService: TranscriptionService, chatService: ChatService, mediaLibraryService: MediaLibraryService) {
         self.transcriptionService = transcriptionService
         self.chatService = chatService
+        self.mediaLibraryService = mediaLibraryService
         setupTimeTracking()
     }
 
@@ -58,6 +64,9 @@ final class PlayerViewModel: ObservableObject {
             var updatedItem = item
             updatedItem.transcript = transcript
             mediaItem = updatedItem
+
+            // Persist transcript to library (survives app restart)
+            mediaLibraryService.updateItem(updatedItem)
 
             // Set up chat context
             chatService.setTranscript(transcript)

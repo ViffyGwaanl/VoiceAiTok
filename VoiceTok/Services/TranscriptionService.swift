@@ -55,6 +55,9 @@ final class TranscriptionService: ObservableObject {
 
         state = .transcribing(progress: 0.0)
 
+        // Get audio duration for progress estimation
+        let audioDuration = await getAudioDuration(url: audioURL)
+
         do {
             let options = DecodingOptions(
                 language: config.language,
@@ -62,9 +65,24 @@ final class TranscriptionService: ObservableObject {
                 wordTimestamps: config.wordTimestamps
             )
 
+            // Progress callback: estimate based on last processed timestamp vs total duration
+            let callback: TranscriptionCallback = { [weak self] progress in
+                Task { @MainActor [weak self] in
+                    guard let self, audioDuration > 0 else { return }
+                    let currentTime = Double(progress.timings.fullPipeline)
+                    // Use the latest segment's end time for progress
+                    if let lastSegment = progress.segments.last {
+                        let pct = min(Double(lastSegment.end) / audioDuration, 0.99)
+                        self.state = .transcribing(progress: pct)
+                    }
+                }
+                return nil // nil = continue transcribing
+            }
+
             guard let results = try await whisperKit.transcribe(
                 audioPath: audioURL.path,
-                decodeOptions: options
+                decodeOptions: options,
+                callback: callback
             ) else {
                 throw TranscriptionError.transcriptionFailed
             }
@@ -181,6 +199,17 @@ final class TranscriptionService: ObservableObject {
         }
 
         return outputURL
+    }
+
+    // MARK: - Audio Duration Helper
+    private func getAudioDuration(url: URL) async -> Double {
+        let asset = AVURLAsset(url: url)
+        do {
+            let duration = try await asset.load(.duration)
+            return duration.seconds.isNaN ? 0 : duration.seconds
+        } catch {
+            return 0
+        }
     }
 
     // MARK: - Model Management

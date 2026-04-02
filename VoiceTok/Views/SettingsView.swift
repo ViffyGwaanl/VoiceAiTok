@@ -8,7 +8,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) var dismiss
 
     @AppStorage("api_provider") private var apiProvider = "claude"
-    @AppStorage("api_key") private var apiKey = ""
+    @State private var apiKey = ""  // Loaded from Keychain, not UserDefaults
     @AppStorage("api_base_url") private var apiBaseURL = ""
     @AppStorage("chat_model") private var chatModel = "claude-sonnet-4-20250514"
     @AppStorage("whisper_model") private var whisperModel = "base"
@@ -131,10 +131,16 @@ struct SettingsView: View {
                     .fontWeight(.semibold)
                 }
             }
+            .onAppear {
+                apiKey = KeychainService.load(key: "api_key")
+            }
         }
     }
 
     private func applySettings() {
+        // Save API key securely to Keychain
+        KeychainService.save(key: "api_key", value: apiKey)
+
         // Apply chat settings
         if let provider = ChatService.APIProvider(rawValue: apiProvider) {
             appState.chatService.config.apiProvider = provider

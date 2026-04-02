@@ -20,6 +20,12 @@ final class AppState: ObservableObject {
     @Published var whisperKitReady = false
 
     init() {
+        // Load API key from Keychain
+        let savedKey = KeychainService.load(key: "api_key")
+        if !savedKey.isEmpty {
+            chatService.config.apiKey = savedKey
+        }
+
         Task {
             await prepareWhisperKit()
         }

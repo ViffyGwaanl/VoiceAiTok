@@ -140,8 +140,8 @@ final class AVMediaPlayerService: ObservableObject, MediaPlayerProtocol {
 }
 
 // MARK: - VLCKit-based Player (Production)
-// Uncomment and use when VLCKit is available via CocoaPods
-/*
+// Automatically available when MobileVLCKit is installed via CocoaPods
+#if canImport(MobileVLCKit)
 import MobileVLCKit
 
 @MainActor
@@ -233,4 +233,4 @@ extension VLCPlayerService: VLCMediaPlayerDelegate {
         }
     }
 }
-*/
+#endif

@@ -31,6 +31,13 @@ struct ContentView: View {
                 .tag(AppTab.chat)
         }
         .tint(.orange)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button(action: { showSettings = true }) {
+                    Image(systemName: "gearshape")
+                }
+            }
+        }
         .sheet(isPresented: $showSettings) {
             SettingsView()
         }
@@ -46,7 +53,8 @@ struct PlayerContainerView: View {
             PlayerView(
                 mediaItem: item,
                 transcriptionService: appState.transcriptionService,
-                chatService: appState.chatService
+                chatService: appState.chatService,
+                mediaLibraryService: appState.mediaLibraryService
             )
         } else {
             EmptyPlayerView()

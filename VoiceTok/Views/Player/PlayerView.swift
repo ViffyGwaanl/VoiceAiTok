@@ -8,18 +8,21 @@ struct PlayerView: View {
     let mediaItem: MediaItem
     let transcriptionService: TranscriptionService
     let chatService: ChatService
+    let mediaLibraryService: MediaLibraryService
 
     @StateObject private var viewModel: PlayerViewModel
     @State private var showModelPicker = false
     @State private var selectedModel = "base"
 
-    init(mediaItem: MediaItem, transcriptionService: TranscriptionService, chatService: ChatService) {
+    init(mediaItem: MediaItem, transcriptionService: TranscriptionService, chatService: ChatService, mediaLibraryService: MediaLibraryService) {
         self.mediaItem = mediaItem
         self.transcriptionService = transcriptionService
         self.chatService = chatService
+        self.mediaLibraryService = mediaLibraryService
         _viewModel = StateObject(wrappedValue: PlayerViewModel(
             transcriptionService: transcriptionService,
-            chatService: chatService
+            chatService: chatService,
+            mediaLibraryService: mediaLibraryService
         ))
     }
 
@@ -41,7 +44,7 @@ struct PlayerView: View {
                     // Portrait: player top, transcript bottom
                     VStack(spacing: 0) {
                         playerSection
-                            .frame(height: mediaItem.mediaType == .video ? 280 : 200)
+                            .frame(height: (viewModel.mediaItem ?? mediaItem).mediaType == .video ? 280 : 200)
                         Divider()
                         transcriptPanel
                     }
@@ -241,6 +244,7 @@ struct PlayerView: View {
     // MARK: - Transcript Panel
     @ViewBuilder
     private var transcriptPanel: some View {
+        let currentItem = viewModel.mediaItem ?? mediaItem
         VStack(spacing: 0) {
             // Panel Header
             HStack {
@@ -251,7 +255,7 @@ struct PlayerView: View {
                 Spacer()
 
                 if viewModel.hasTranscript {
-                    if let lang = mediaItem.transcript?.language {
+                    if let lang = currentItem.transcript?.language {
                         Text(lang.uppercased())
                             .font(.caption2)
                             .fontWeight(.bold)
@@ -261,7 +265,7 @@ struct PlayerView: View {
                             .clipShape(Capsule())
                     }
 
-                    Text("\(mediaItem.transcript?.segments.count ?? 0) segments")
+                    Text("\(currentItem.transcript?.segments.count ?? 0) segments")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -273,7 +277,7 @@ struct PlayerView: View {
             Divider()
 
             // Content
-            if let transcript = mediaItem.transcript {
+            if let transcript = currentItem.transcript {
                 TranscriptListView(
                     segments: transcript.segments,
                     activeIndex: viewModel.activeSegmentIndex,
@@ -354,9 +358,10 @@ struct PlayerView: View {
 
     // MARK: - Export
     private func exportTranscript() {
-        guard let transcript = mediaItem.transcript else { return }
+        let currentItem = viewModel.mediaItem ?? mediaItem
+        guard let transcript = currentItem.transcript else { return }
 
-        var text = "# \(mediaItem.title)\n"
+        var text = "# \(currentItem.title)\n"
         text += "## Transcript\n\n"
         for seg in transcript.segments {
             text += "[\(seg.formattedTimeRange)] \(seg.text)\n\n"
