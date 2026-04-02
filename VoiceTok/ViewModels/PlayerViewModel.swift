@@ -47,8 +47,18 @@ final class PlayerViewModel: ObservableObject {
 
     // MARK: - Transcription
     func startTranscription() async {
-        guard let item = mediaItem,
-              let url = item.fileURL ?? URL(fileURLWithPath: item.filePath) as URL? else { return }
+        guard let item = mediaItem else { return }
+
+        // Resolve file URL safely
+        let url: URL
+        if let fileURL = item.fileURL, FileManager.default.fileExists(atPath: fileURL.path) {
+            url = fileURL
+        } else if FileManager.default.fileExists(atPath: item.filePath) {
+            url = URL(fileURLWithPath: item.filePath)
+        } else {
+            transcriptionState = .failed(String(localized: "File not found. Try re-importing the media."))
+            return
+        }
 
         transcriptionState = .preparing
 

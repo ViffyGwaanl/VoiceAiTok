@@ -135,6 +135,17 @@ final class TranscriptionService: ObservableObject {
 
     // MARK: - Transcribe from Media (extract audio first)
     func transcribeMedia(at url: URL) async throws -> Transcript {
+        // Ensure WhisperKit is initialized (downloads model if needed)
+        if !isInitialized {
+            state = .preparing
+            try await initialize()
+        }
+
+        // Verify file exists
+        guard FileManager.default.fileExists(atPath: url.path) else {
+            throw TranscriptionError.audioExtractionFailed
+        }
+
         state = .extractingAudio
 
         // Extract audio from video if needed
@@ -191,19 +202,41 @@ final class TranscriptionService: ObservableObject {
         )
         writer.add(writerInput)
 
-        reader.startReading()
-        writer.startWriting()
+        guard reader.startReading() else {
+            throw TranscriptionError.audioExtractionFailed
+        }
+        guard writer.startWriting() else {
+            throw TranscriptionError.audioExtractionFailed
+        }
         writer.startSession(atSourceTime: .zero)
 
-        await withCheckedContinuation { continuation in
+        // Use withCheckedThrowingContinuation for safe single-resume guarantee
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            var didResume = false
+            let resumeOnce: (Result<Void, Error>) -> Void = { result in
+                guard !didResume else { return }
+                didResume = true
+                continuation.resume(with: result)
+            }
+
             writerInput.requestMediaDataWhenReady(on: DispatchQueue(label: "audio.export")) {
                 while writerInput.isReadyForMoreMediaData {
+                    guard reader.status == .reading else {
+                        writerInput.markAsFinished()
+                        writer.cancelWriting()
+                        resumeOnce(.failure(TranscriptionError.audioExtractionFailed))
+                        return
+                    }
                     if let buffer = readerOutput.copyNextSampleBuffer() {
                         writerInput.append(buffer)
                     } else {
                         writerInput.markAsFinished()
                         writer.finishWriting {
-                            continuation.resume()
+                            if writer.status == .completed {
+                                resumeOnce(.success(()))
+                            } else {
+                                resumeOnce(.failure(TranscriptionError.audioExtractionFailed))
+                            }
                         }
                         return
                     }
