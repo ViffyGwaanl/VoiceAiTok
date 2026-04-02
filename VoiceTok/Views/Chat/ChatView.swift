@@ -8,6 +8,7 @@ struct ChatView: View {
     @State private var inputText = ""
     @FocusState private var isInputFocused: Bool
     @State private var showQuickActions = false
+    @State private var showSettings = false
 
     var body: some View {
         NavigationStack {
@@ -29,6 +30,11 @@ struct ChatView: View {
             .navigationTitle("AI Chat")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button(action: { showSettings = true }) {
+                        Image(systemName: "gearshape")
+                    }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
                         Button(action: { showQuickActions.toggle() }) {
@@ -43,6 +49,7 @@ struct ChatView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showSettings) { SettingsView() }
             .animation(.easeInOut(duration: 0.25), value: showQuickActions)
         }
     }

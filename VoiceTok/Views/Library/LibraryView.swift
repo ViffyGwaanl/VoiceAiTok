@@ -11,6 +11,7 @@ struct LibraryView: View {
     @State private var urlInput = ""
     @State private var searchText = ""
     @State private var sortOrder: SortOrder = .dateDesc
+    @State private var showSettings = false
 
     enum SortOrder: String, CaseIterable {
         case dateDesc = "Newest First"
@@ -50,16 +51,21 @@ struct LibraryView: View {
             .navigationTitle("Library")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Menu {
-                        Button(action: { showFilePicker = true }) {
-                            Label("Import from Files", systemImage: "folder")
+                    HStack(spacing: 16) {
+                        Button(action: { showSettings = true }) {
+                            Image(systemName: "gearshape")
                         }
-                        Button(action: { showURLInput = true }) {
-                            Label("Import from URL", systemImage: "link")
+                        Menu {
+                            Button(action: { showFilePicker = true }) {
+                                Label("Import from Files", systemImage: "folder")
+                            }
+                            Button(action: { showURLInput = true }) {
+                                Label("Import from URL", systemImage: "link")
+                            }
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title3)
                         }
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title3)
                     }
                 }
                 ToolbarItem(placement: .topBarLeading) {
@@ -73,6 +79,9 @@ struct LibraryView: View {
                         Image(systemName: "arrow.up.arrow.down.circle")
                     }
                 }
+            }
+            .sheet(isPresented: $showSettings) {
+                SettingsView()
             }
             .searchable(text: $searchText, prompt: "Search media...")
             .fileImporter(

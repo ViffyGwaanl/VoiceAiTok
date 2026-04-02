@@ -5,7 +5,6 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var appState: AppState
-    @State private var showSettings = false
 
     var body: some View {
         TabView(selection: $appState.selectedTab) {
@@ -31,16 +30,6 @@ struct ContentView: View {
                 .tag(AppTab.chat)
         }
         .tint(.orange)
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button(action: { showSettings = true }) {
-                    Image(systemName: "gearshape")
-                }
-            }
-        }
-        .sheet(isPresented: $showSettings) {
-            SettingsView()
-        }
     }
 }
 
@@ -77,6 +66,8 @@ struct ChatContainerView: View {
 
 // MARK: - Empty States
 struct EmptyPlayerView: View {
+    @State private var showSettings = false
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -92,11 +83,21 @@ struct EmptyPlayerView: View {
                     .multilineTextAlignment(.center)
             }
             .navigationTitle("Player")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { showSettings = true }) {
+                        Image(systemName: "gearshape")
+                    }
+                }
+            }
+            .sheet(isPresented: $showSettings) { SettingsView() }
         }
     }
 }
 
 struct EmptyChatView: View {
+    @State private var showSettings = false
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
@@ -112,6 +113,14 @@ struct EmptyChatView: View {
                     .multilineTextAlignment(.center)
             }
             .navigationTitle("AI Chat")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: { showSettings = true }) {
+                        Image(systemName: "gearshape")
+                    }
+                }
+            }
+            .sheet(isPresented: $showSettings) { SettingsView() }
         }
     }
 }
