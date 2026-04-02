@@ -12,6 +12,7 @@ struct VoiceTokApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(appState)
+                .environmentObject(appState.aiProviderService)
                 .preferredColorScheme(.dark)
         }
     }

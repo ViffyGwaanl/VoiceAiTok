@@ -5,6 +5,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
+    @EnvironmentObject var providerService: AIProviderService
     @Environment(\.dismiss) var dismiss
 
     @AppStorage("whisper_model") private var whisperModel = "base"
@@ -23,7 +24,7 @@ struct SettingsView: View {
                         HStack {
                             Text("AI Providers")
                             Spacer()
-                            if let active = appState.aiProviderService.activeProvider {
+                            if let active = providerService.activeProvider {
                                 Text(active.name)
                                     .foregroundStyle(.secondary)
                             }

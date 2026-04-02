@@ -4,16 +4,14 @@
 import SwiftUI
 
 struct AIProviderListView: View {
-    @EnvironmentObject var appState: AppState
+    @EnvironmentObject var providerService: AIProviderService
     @State private var showAddSheet = false
-
-    private var service: AIProviderService { appState.aiProviderService }
 
     var body: some View {
         List {
             // Built-in providers
             Section {
-                ForEach(service.providers.filter(\.isBuiltIn)) { provider in
+                ForEach(providerService.providers.filter(\.isBuiltIn)) { provider in
                     providerRow(provider)
                 }
             } header: {
@@ -21,15 +19,15 @@ struct AIProviderListView: View {
             }
 
             // Custom providers
-            if service.providers.contains(where: { !$0.isBuiltIn }) {
+            let custom = providerService.providers.filter { !$0.isBuiltIn }
+            if !custom.isEmpty {
                 Section {
-                    ForEach(service.providers.filter { !$0.isBuiltIn }) { provider in
+                    ForEach(custom) { provider in
                         providerRow(provider)
                     }
                     .onDelete { indexSet in
-                        let custom = service.providers.filter { !$0.isBuiltIn }
                         for i in indexSet {
-                            service.deleteProvider(custom[i])
+                            providerService.deleteProvider(custom[i])
                         }
                     }
                 } header: {
@@ -46,14 +44,14 @@ struct AIProviderListView: View {
             }
         }
         .sheet(isPresented: $showAddSheet) {
-            AddProviderSheet(service: service)
+            AddProviderSheet()
         }
     }
 
     @ViewBuilder
     private func providerRow(_ provider: AIProvider) -> some View {
         NavigationLink {
-            AIProviderDetailView(provider: provider)
+            AIProviderDetailView(providerID: provider.id)
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: provider.type.icon)
@@ -63,7 +61,7 @@ struct AIProviderListView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(provider.name)
-                        .fontWeight(service.selectedProviderID == provider.id ? .semibold : .regular)
+                        .fontWeight(providerService.selectedProviderID == provider.id ? .semibold : .regular)
                     Text(provider.modelName)
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -71,7 +69,7 @@ struct AIProviderListView: View {
 
                 Spacer()
 
-                if service.selectedProviderID == provider.id {
+                if providerService.selectedProviderID == provider.id {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
                 }
@@ -82,14 +80,14 @@ struct AIProviderListView: View {
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 6)
                         .padding(.vertical, 2)
-                        .background(.quaternary)
+                        .background(Color.gray.opacity(0.2))
                         .clipShape(Capsule())
                 }
             }
         }
         .swipeActions(edge: .leading) {
             Button {
-                service.selectProvider(provider)
+                providerService.selectProvider(provider)
             } label: {
                 Label("Set Default", systemImage: "checkmark.circle")
             }
@@ -101,7 +99,7 @@ struct AIProviderListView: View {
 // MARK: - Add Provider Sheet
 
 struct AddProviderSheet: View {
-    let service: AIProviderService
+    @EnvironmentObject var providerService: AIProviderService
     @Environment(\.dismiss) var dismiss
     @State private var name = ""
     @State private var type: AIProviderType = .openaiCompatible
@@ -125,11 +123,11 @@ struct AddProviderSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
-                        let provider = service.addProvider(
+                        let provider = providerService.addProvider(
                             name: name.isEmpty ? type.displayName : name,
                             type: type
                         )
-                        service.selectProvider(provider)
+                        providerService.selectProvider(provider)
                         dismiss()
                     }
                     .fontWeight(.semibold)
