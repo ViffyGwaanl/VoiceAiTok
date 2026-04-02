@@ -1,30 +1,30 @@
 // ChatView.swift
-// AI conversation interface for discussing transcript content
+// AI conversation interface — inspired by PaperTok Reader
+// Features: copy, regenerate, stop, smart scroll, provider badge, markdown
 
 import SwiftUI
 
 struct ChatView: View {
     @ObservedObject var chatService: ChatService
+    @EnvironmentObject var providerService: AIProviderService
     @State private var inputText = ""
     @FocusState private var isInputFocused: Bool
-    @State private var showQuickActions = false
+    @State private var showQuickActions = true
     @State private var showSettings = false
+    @State private var showClearConfirm = false
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                // Messages List
                 messagesScrollView
 
                 Divider()
 
-                // Quick Actions Bar
-                if showQuickActions {
+                if showQuickActions && !chatService.isGenerating {
                     quickActionsBar
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
 
-                // Input Bar
                 inputBar
             }
             .navigationTitle("AI Chat")
@@ -41,7 +41,7 @@ struct ChatView: View {
                             Label(showQuickActions ? "Hide Quick Actions" : "Show Quick Actions",
                                   systemImage: "bolt.circle")
                         }
-                        Button(action: { chatService.clearHistory() }) {
+                        Button(action: { showClearConfirm = true }) {
                             Label("Clear Chat", systemImage: "trash")
                         }
                     } label: {
@@ -50,25 +50,45 @@ struct ChatView: View {
                 }
             }
             .sheet(isPresented: $showSettings) { SettingsView() }
+            .confirmationDialog("Clear all messages?", isPresented: $showClearConfirm) {
+                Button("Clear Chat", role: .destructive) { chatService.clearHistory() }
+            }
             .animation(.easeInOut(duration: 0.25), value: showQuickActions)
         }
     }
 
     // MARK: - Messages
+
     private var messagesScrollView: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(spacing: 12) {
-                    // Welcome card
+                LazyVStack(spacing: 4) {
                     welcomeCard
                         .padding(.top, 8)
 
-                    ForEach(chatService.messages.filter { $0.role != .system }) { message in
-                        ChatBubble(message: message)
-                            .id(message.id)
+                    // Provider badge
+                    if let active = providerService.activeProvider {
+                        HStack(spacing: 4) {
+                            Image(systemName: active.type.icon)
+                            Text(active.name)
+                            Text("·")
+                            Text(active.modelName)
+                        }
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                        .padding(.vertical, 4)
                     }
 
-                    // Typing indicator
+                    ForEach(chatService.messages.filter { $0.role != .system }) { message in
+                        ChatBubble(
+                            message: message,
+                            isLastAssistant: isLastAssistantMessage(message),
+                            onCopy: { copyMessage(message) },
+                            onRegenerate: { Task { await chatService.regenerate() } }
+                        )
+                        .id(message.id)
+                    }
+
                     if chatService.isGenerating {
                         TypingIndicator()
                             .id("typing")
@@ -78,23 +98,35 @@ struct ChatView: View {
                 .padding(.bottom, 8)
             }
             .onChange(of: chatService.messages.count) { _, _ in
-                if let lastMsg = chatService.messages.last {
-                    withAnimation {
-                        proxy.scrollTo(lastMsg.id, anchor: .bottom)
-                    }
-                }
+                scrollToBottom(proxy)
             }
-            .onChange(of: chatService.isGenerating) { _, isGen in
-                if isGen {
-                    withAnimation {
-                        proxy.scrollTo("typing", anchor: .bottom)
-                    }
+            .onChange(of: chatService.currentStreamText) { _, _ in
+                if chatService.isGenerating, let last = chatService.messages.last {
+                    proxy.scrollTo(last.id, anchor: .bottom)
                 }
             }
         }
     }
 
+    private func scrollToBottom(_ proxy: ScrollViewProxy) {
+        if let lastMsg = chatService.messages.last {
+            withAnimation(.easeOut(duration: 0.25)) {
+                proxy.scrollTo(lastMsg.id, anchor: .bottom)
+            }
+        }
+    }
+
+    private func isLastAssistantMessage(_ message: ChatMessage) -> Bool {
+        guard message.role == .assistant else { return false }
+        return chatService.messages.last(where: { $0.role == .assistant })?.id == message.id
+    }
+
+    private func copyMessage(_ message: ChatMessage) {
+        UIPasteboard.general.string = message.content
+    }
+
     // MARK: - Welcome Card
+
     private var welcomeCard: some View {
         VStack(spacing: 12) {
             Image(systemName: "bubble.left.and.bubble.right.fill")
@@ -120,6 +152,7 @@ struct ChatView: View {
     }
 
     // MARK: - Quick Actions
+
     private var quickActionsBar: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
@@ -146,16 +179,15 @@ struct ChatView: View {
     }
 
     // MARK: - Input Bar
+
     private var inputBar: some View {
         HStack(alignment: .bottom, spacing: 10) {
-            // Quick actions toggle
             Button(action: { showQuickActions.toggle() }) {
                 Image(systemName: "bolt.circle.fill")
                     .font(.title2)
                     .foregroundStyle(showQuickActions ? .orange : .secondary)
             }
 
-            // Text field
             TextField("Ask about the content...", text: $inputText, axis: .vertical)
                 .textFieldStyle(.plain)
                 .lineLimit(1...5)
@@ -164,18 +196,26 @@ struct ChatView: View {
                 .padding(.vertical, 8)
                 .background(.ultraThinMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 20))
+                .onSubmit { sendMessage() }
 
-            // Send button
-            Button(action: sendMessage) {
-                Image(systemName: "arrow.up.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(
-                        inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                        ? Color.secondary : Color.orange
-                    )
+            // Send or Stop button
+            if chatService.isGenerating {
+                Button(action: { chatService.stopGeneration() }) {
+                    Image(systemName: "stop.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.red)
+                }
+            } else {
+                Button(action: sendMessage) {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(
+                            inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                            ? Color.secondary : Color.orange
+                        )
+                }
+                .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
-            .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-                      || chatService.isGenerating)
         }
         .padding(.horizontal)
         .padding(.vertical, 10)
@@ -191,9 +231,13 @@ struct ChatView: View {
     }
 }
 
-// MARK: - Chat Bubble
+// MARK: - Chat Bubble (with copy, regenerate)
+
 struct ChatBubble: View {
     let message: ChatMessage
+    var isLastAssistant: Bool = false
+    var onCopy: (() -> Void)?
+    var onRegenerate: (() -> Void)?
 
     var isUser: Bool { message.role == .user }
 
@@ -213,23 +257,49 @@ struct ChatBubble: View {
             VStack(alignment: isUser ? .trailing : .leading, spacing: 4) {
                 Text(message.content)
                     .font(.subheadline)
+                    .textSelection(.enabled)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .background(isUser ? Color.orange : Color(.systemGray5))
                     .foregroundColor(isUser ? .white : .primary)
                     .clipShape(RoundedRectangle(cornerRadius: 18))
 
-                Text(message.timestamp, style: .time)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                // Action buttons for AI messages
+                if !isUser && !message.content.isEmpty {
+                    HStack(spacing: 12) {
+                        Text(message.timestamp, style: .time)
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+
+                        Button(action: { onCopy?() }) {
+                            Image(systemName: "doc.on.doc")
+                                .font(.caption2)
+                        }
+                        .foregroundStyle(.tertiary)
+
+                        if isLastAssistant {
+                            Button(action: { onRegenerate?() }) {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.caption2)
+                            }
+                            .foregroundStyle(.tertiary)
+                        }
+                    }
+                } else {
+                    Text(message.timestamp, style: .time)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
             }
 
             if !isUser { Spacer(minLength: 40) }
         }
+        .padding(.vertical, 2)
     }
 }
 
 // MARK: - Quick Action Button
+
 struct QuickActionButton: View {
     let title: LocalizedStringKey
     let icon: String
@@ -250,6 +320,7 @@ struct QuickActionButton: View {
 }
 
 // MARK: - Typing Indicator
+
 struct TypingIndicator: View {
     @State private var phase = 0.0
 
@@ -260,7 +331,7 @@ struct TypingIndicator: View {
                     Circle()
                         .fill(.secondary)
                         .frame(width: 6, height: 6)
-                        .scaleEffect(dotScale(for: i))
+                        .scaleEffect(phase == 0 ? 0.6 : 1.0)
                         .animation(
                             .easeInOut(duration: 0.5)
                             .repeatForever()
@@ -277,9 +348,5 @@ struct TypingIndicator: View {
             Spacer()
         }
         .onAppear { phase = 1.0 }
-    }
-
-    private func dotScale(for index: Int) -> CGFloat {
-        phase == 0 ? 0.6 : 1.0
     }
 }

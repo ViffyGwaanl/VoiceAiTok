@@ -10,6 +10,7 @@ final class ChatService: ObservableObject {
     @Published var messages: [ChatMessage] = []
     @Published var isGenerating = false
     @Published var currentStreamText = ""
+    private var streamingTask: Task<Void, Never>?
 
     // MARK: - Configuration
 
@@ -99,46 +100,71 @@ final class ChatService: ObservableObject {
     func send(_ userMessage: String) async {
         let userMsg = ChatMessage(role: .user, content: userMessage)
         messages.append(userMsg)
+        await runStreaming()
+    }
+
+    /// Stop in-progress generation
+    func stopGeneration() {
+        streamingTask?.cancel()
+        streamingTask = nil
+        isGenerating = false
+    }
+
+    /// Regenerate the last AI response
+    func regenerate() async {
+        // Remove last assistant message
+        if let lastAssistant = messages.last, lastAssistant.role == .assistant {
+            messages.removeLast()
+        }
+        await runStreaming()
+    }
+
+    private func runStreaming() async {
         isGenerating = true
         currentStreamText = ""
 
-        // Add a placeholder assistant message for streaming
         let placeholderId = UUID()
         let placeholder = ChatMessage(id: placeholderId, role: .assistant, content: "")
         messages.append(placeholder)
 
-        do {
-            try await streamLLM(messages: messages) { [weak self] delta in
-                guard let self else { return }
-                self.currentStreamText += delta
-                // Update the last message in place
-                if let idx = self.messages.lastIndex(where: { $0.id == placeholderId }) {
-                    self.messages[idx] = ChatMessage(
-                        id: placeholderId,
-                        role: .assistant,
-                        content: self.currentStreamText,
-                        timestamp: self.messages[idx].timestamp
-                    )
-                }
-            }
-        } catch {
-            // If streaming fails, try non-streaming fallback
+        streamingTask = Task { [weak self] in
+            guard let self else { return }
             do {
-                let response = try await callLLM(messages: messages.filter { $0.id != placeholderId })
-                if let idx = messages.lastIndex(where: { $0.id == placeholderId }) {
-                    messages[idx] = ChatMessage(id: placeholderId, role: .assistant, content: response)
+                try Task.checkCancellation()
+                try await self.streamLLM(messages: self.messages) { [weak self] delta in
+                    guard let self else { return }
+                    try Task.checkCancellation()
+                    self.currentStreamText += delta
+                    if let idx = self.messages.lastIndex(where: { $0.id == placeholderId }) {
+                        self.messages[idx] = ChatMessage(
+                            id: placeholderId, role: .assistant,
+                            content: self.currentStreamText,
+                            timestamp: self.messages[idx].timestamp
+                        )
+                    }
                 }
+            } catch is CancellationError {
+                // Stopped by user — keep partial response
             } catch {
-                if let idx = messages.lastIndex(where: { $0.id == placeholderId }) {
-                    messages[idx] = ChatMessage(
-                        id: placeholderId, role: .assistant,
-                        content: String(format: String(localized: "Sorry, I encountered an error: %@"), error.localizedDescription)
-                    )
+                // Streaming failed — try non-streaming fallback
+                do {
+                    let response = try await self.callLLM(messages: self.messages.filter { $0.id != placeholderId })
+                    if let idx = self.messages.lastIndex(where: { $0.id == placeholderId }) {
+                        self.messages[idx] = ChatMessage(id: placeholderId, role: .assistant, content: response)
+                    }
+                } catch {
+                    if let idx = self.messages.lastIndex(where: { $0.id == placeholderId }) {
+                        self.messages[idx] = ChatMessage(
+                            id: placeholderId, role: .assistant,
+                            content: String(format: String(localized: "Sorry, I encountered an error: %@"), error.localizedDescription)
+                        )
+                    }
                 }
             }
+            await MainActor.run { self.isGenerating = false }
         }
 
-        isGenerating = false
+        await streamingTask?.value
     }
 
     // MARK: - Quick Actions
@@ -159,7 +185,7 @@ final class ChatService: ObservableObject {
     }
 
     // MARK: - Streaming LLM Call
-    private func streamLLM(messages: [ChatMessage], onDelta: @escaping (String) -> Void) async throws {
+    private func streamLLM(messages: [ChatMessage], onDelta: @escaping (String) throws -> Void) async throws {
         let cfg = effectiveConfig
         switch cfg.apiProvider {
         case .claude:
@@ -284,7 +310,7 @@ final class ChatService: ObservableObject {
     }
 
     // MARK: - Streaming: Claude
-    private func streamClaude(messages: [ChatMessage], cfg: Config, onDelta: @escaping (String) -> Void) async throws {
+    private func streamClaude(messages: [ChatMessage], cfg: Config, onDelta: @escaping (String) throws -> Void) async throws {
         guard !cfg.apiKey.isEmpty else { throw ChatError.missingAPIKey }
 
         let base = cfg.baseURL.isEmpty ? "https://api.anthropic.com" : cfg.baseURL
@@ -324,13 +350,13 @@ final class ChatService: ObservableObject {
             // Claude SSE: content_block_delta events contain {"delta": {"text": "..."}}
             if let delta = json["delta"] as? [String: Any],
                let text = delta["text"] as? String {
-                await MainActor.run { onDelta(text) }
+                try await MainActor.run { try onDelta(text) }
             }
         }
     }
 
     // MARK: - Streaming: OpenAI
-    private func streamOpenAI(messages: [ChatMessage], cfg: Config, onDelta: @escaping (String) -> Void) async throws {
+    private func streamOpenAI(messages: [ChatMessage], cfg: Config, onDelta: @escaping (String) throws -> Void) async throws {
         guard !cfg.apiKey.isEmpty else { throw ChatError.missingAPIKey }
 
         let base = cfg.baseURL.isEmpty ? "https://api.openai.com" : cfg.baseURL
@@ -366,13 +392,13 @@ final class ChatService: ObservableObject {
             if let choices = json["choices"] as? [[String: Any]],
                let delta = choices.first?["delta"] as? [String: Any],
                let content = delta["content"] as? String {
-                await MainActor.run { onDelta(content) }
+                try await MainActor.run { try onDelta(content) }
             }
         }
     }
 
     // MARK: - Streaming: Ollama
-    private func streamOllama(messages: [ChatMessage], cfg: Config, onDelta: @escaping (String) -> Void) async throws {
+    private func streamOllama(messages: [ChatMessage], cfg: Config, onDelta: @escaping (String) throws -> Void) async throws {
         let url = URL(string: "\(cfg.baseURL.isEmpty ? "http://localhost:11434" : cfg.baseURL)/api/chat")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -399,7 +425,7 @@ final class ChatService: ObservableObject {
             // Ollama streaming: each line is a JSON with message.content
             if let message = json["message"] as? [String: Any],
                let content = message["content"] as? String {
-                await MainActor.run { onDelta(content) }
+                try await MainActor.run { try onDelta(content) }
             }
         }
     }

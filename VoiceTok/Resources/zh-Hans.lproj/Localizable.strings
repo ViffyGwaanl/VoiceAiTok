@@ -184,3 +184,5 @@
 "Top P" = "Top P";
 "Temperature controls randomness (0=focused, 2=creative). Top P controls diversity of token selection." = "Temperature 控制随机性（0=专注，2=创意）。Top P 控制词元选择的多样性。";
 "File not found. Try re-importing the media." = "文件未找到，请尝试重新导入媒体。";
+"Re-transcribe" = "重新转录";
+"Clear all messages?" = "清除所有消息？";

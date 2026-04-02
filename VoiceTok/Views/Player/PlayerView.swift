@@ -55,15 +55,18 @@ struct PlayerView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Menu {
+                        Button(action: { showModelPicker = true }) {
+                            Label("Select Model", systemImage: "cpu")
+                        }
                         if !viewModel.hasTranscript {
-                            Button(action: { showModelPicker = true }) {
-                                Label("Select Model", systemImage: "cpu")
-                            }
                             Button(action: { Task { await viewModel.startTranscription() } }) {
                                 Label("Transcribe", systemImage: "waveform.badge.mic")
                             }
                         }
                         if viewModel.hasTranscript {
+                            Button(action: { Task { await viewModel.startTranscription() } }) {
+                                Label("Re-transcribe", systemImage: "arrow.clockwise")
+                            }
                             Button(action: { exportTranscript() }) {
                                 Label("Export Transcript", systemImage: "square.and.arrow.up")
                             }
