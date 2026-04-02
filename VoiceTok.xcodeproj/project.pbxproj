@@ -18,6 +18,7 @@
 		6E1FD0C63547C7F525A9117D /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFC610CDFA03EE2562E99C3 /* AppState.swift */; };
 		A097858855FDA39040C5A868 /* LibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B50188A3928A53C2CCDCF38 /* LibraryView.swift */; };
 		A195751A713ABECA1849D358 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 928B924E8A54431F76BB3502 /* ContentView.swift */; };
+		A95CFCFC356826F25F153C0E /* ModelManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8C3ACB4427D071E66E05575 /* ModelManagementView.swift */; };
 		AB12D027FEEB13F62343F1EA /* VoiceTokApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A961B55C7B3653DE4CEC5970 /* VoiceTokApp.swift */; };
 		ACA2E8D3733CAE41EAE7EC8A /* MediaPlayerService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0AF7A1F52E7020566B1D9117 /* MediaPlayerService.swift */; };
 		ACA5E4C7A2DA122444DF8806 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 797B0435FB57207B2C7CE2D3 /* WhisperKit */; };
@@ -44,6 +45,7 @@
 		A961B55C7B3653DE4CEC5970 /* VoiceTokApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceTokApp.swift; sourceTree = "<group>"; };
 		B45DC9BFDDF2074B46161C81 /* VoiceTok.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = VoiceTok.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CCCF01366277CC330A96B003 /* InfoPlist.strings */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
+		E8C3ACB4427D071E66E05575 /* ModelManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelManagementView.swift; sourceTree = "<group>"; };
 		F5268CA5BE7A533D3EB49026 /* KeychainService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainService.swift; sourceTree = "<group>"; };
 		FA7C736E89A86945EDE19007 /* TranscriptionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TranscriptionService.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -91,6 +93,14 @@
 				B45DC9BFDDF2074B46161C81 /* VoiceTok.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		5E066AD87747E38C0E9C4D7E /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				E8C3ACB4427D071E66E05575 /* ModelManagementView.swift */,
+			);
+			path = Settings;
 			sourceTree = "<group>";
 		};
 		716E657BA25B5E2E14F6BD6D /* Chat */ = {
@@ -154,6 +164,7 @@
 				716E657BA25B5E2E14F6BD6D /* Chat */,
 				4D39991D88A667BAB5B9E96A /* Library */,
 				BF06DFCB61F73BDCE72D488F /* Player */,
+				5E066AD87747E38C0E9C4D7E /* Settings */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -266,6 +277,7 @@
 				6B6D76E7CA10840DF7153CA1 /* MediaItem.swift in Sources */,
 				3416C6B0A0FF9FABD487AFAE /* MediaLibraryService.swift in Sources */,
 				ACA2E8D3733CAE41EAE7EC8A /* MediaPlayerService.swift in Sources */,
+				A95CFCFC356826F25F153C0E /* ModelManagementView.swift in Sources */,
 				5CA3A5791AC2F68DC3EC038C /* PlayerView.swift in Sources */,
 				520F3496B7B28D0292B964CE /* PlayerViewModel.swift in Sources */,
 				CB6C15D64C042D9781FF0154 /* SettingsView.swift in Sources */,

@@ -49,9 +49,14 @@ struct SettingsView: View {
 
                 // MARK: - Whisper Transcription
                 Section {
-                    Picker("Model", selection: $whisperModel) {
-                        ForEach(TranscriptionService.availableModels, id: \.self) { model in
-                            Text(model).tag(model)
+                    NavigationLink {
+                        ModelManagementView()
+                    } label: {
+                        HStack {
+                            Text("Model")
+                            Spacer()
+                            Text(whisperModel)
+                                .foregroundStyle(.secondary)
                         }
                     }
 
@@ -69,7 +74,7 @@ struct SettingsView: View {
                 } header: {
                     Label("WhisperKit Transcription", systemImage: "waveform")
                 } footer: {
-                    Text("Larger models are more accurate but slower. 'base' is recommended for most devices. 'large-v3' provides the best quality on newer iPhones/iPads.")
+                    Text("Manage WhisperKit models: download, switch, or delete models for on-device transcription.")
                 }
 
                 // MARK: - Playback

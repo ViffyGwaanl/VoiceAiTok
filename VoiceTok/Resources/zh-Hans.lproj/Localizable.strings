@@ -79,7 +79,7 @@
 "Language" = "语言";
 "Auto-detect" = "自动检测";
 "WhisperKit Transcription" = "WhisperKit 转录";
-"Larger models are more accurate but slower. 'base' is recommended for most devices. 'large-v3' provides the best quality on newer iPhones/iPads." = "更大的模型更精准但速度更慢。大多数设备推荐使用 'base' 模型，'large-v3' 在新款 iPhone/iPad 上效果最佳。";
+"Manage WhisperKit models: download, switch, or delete models for on-device transcription." = "管理 WhisperKit 模型：下载、切换或删除用于本地转录的模型。";
 "Audio & Video Settings" = "音视频设置";
 "Playback" = "播放";
 "Version" = "版本";
@@ -130,3 +130,21 @@
 "Invalid audio format" = "无效的音频格式";
 "API key not configured. Go to Settings to add your key." = "未配置 API 密钥，请前往设置页面添加。";
 "Sorry, I encountered an error: %@" = "抱歉，发生了错误：%@";
+
+// MARK: - Model Management View
+"Recommended for this device" = "推荐模型（适合此设备）";
+"Use" = "使用";
+"Active" = "使用中";
+"Device Recommendation" = "设备推荐";
+"Fetching models..." = "正在获取模型列表...";
+"Could not load model list" = "无法加载模型列表";
+"Available Models" = "可用模型";
+"Larger models produce more accurate transcriptions but require more storage and processing time. English-only models (.en) are faster for English content." = "更大的模型转录更精准，但需要更多存储空间和处理时间。纯英语模型（.en）处理英语内容速度更快。";
+"Recommended" = "推荐";
+"English only" = "仅英语";
+"Model Cache" = "模型缓存";
+"Clear All Downloaded Models" = "清除所有已下载模型";
+"Storage" = "存储";
+"Whisper Models" = "Whisper 模型";
+"Error" = "错误";
+"OK" = "好";

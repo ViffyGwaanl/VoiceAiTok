@@ -74,7 +74,7 @@ struct PlayerView: View {
                 }
             }
             .confirmationDialog("Select Whisper Model", isPresented: $showModelPicker) {
-                ForEach(TranscriptionService.availableModels, id: \.self) { model in
+                ForEach(TranscriptionService.fallbackModels, id: \.self) { model in
                     Button(model) {
                         selectedModel = model
                         Task {
