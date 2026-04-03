@@ -204,9 +204,14 @@ final class TranscriptionService: ObservableObject {
             throw TranscriptionError.recognizerUnavailable
         }
 
+        // SFSpeechRecognizer can't handle all media formats — extract audio first
+        state = .extractingAudio
+        let asset = AVURLAsset(url: mediaURL)
+        let audioURL = try await extractAudio(from: asset)
+
         state = .transcribing(progress: 0.0)
 
-        let request = SFSpeechURLRecognitionRequest(url: mediaURL)
+        let request = SFSpeechURLRecognitionRequest(url: audioURL)
         request.shouldReportPartialResults = false
         request.taskHint = .dictation
         if #available(iOS 16, *) {

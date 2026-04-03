@@ -8,7 +8,25 @@ import Combine
 final class AppState: ObservableObject {
     // MARK: - Navigation
     @Published var selectedTab: AppTab = .library
-    @Published var activeMediaItem: MediaItem?
+    @Published var activeMediaItem: MediaItem? {
+        didSet {
+            // When a new media item is selected, update or create the player VM
+            if let item = activeMediaItem {
+                if playerViewModel == nil || playerViewModel?.mediaItem?.id != item.id {
+                    let vm = PlayerViewModel(
+                        transcriptionService: transcriptionService,
+                        chatService: chatService,
+                        mediaLibraryService: mediaLibraryService
+                    )
+                    playerViewModel = vm
+                    Task { await vm.loadMedia(item) }
+                }
+            }
+        }
+    }
+
+    /// Persistent player view model — survives tab switches
+    @Published var playerViewModel: PlayerViewModel?
 
     // MARK: - Services
     let transcriptionService = TranscriptionService()

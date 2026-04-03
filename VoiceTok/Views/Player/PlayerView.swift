@@ -6,27 +6,12 @@ import AVKit
 
 struct PlayerView: View {
     let mediaItem: MediaItem
-    let transcriptionService: TranscriptionService
-    let chatService: ChatService
-    let mediaLibraryService: MediaLibraryService
+    @ObservedObject var viewModel: PlayerViewModel
 
     @EnvironmentObject private var appState: AppState
-    @StateObject private var viewModel: PlayerViewModel
     @State private var showModelPicker = false
     @State private var selectedModel = "base"
     @State private var showTranscriptionSettings = false
-
-    init(mediaItem: MediaItem, transcriptionService: TranscriptionService, chatService: ChatService, mediaLibraryService: MediaLibraryService) {
-        self.mediaItem = mediaItem
-        self.transcriptionService = transcriptionService
-        self.chatService = chatService
-        self.mediaLibraryService = mediaLibraryService
-        _viewModel = StateObject(wrappedValue: PlayerViewModel(
-            transcriptionService: transcriptionService,
-            chatService: chatService,
-            mediaLibraryService: mediaLibraryService
-        ))
-    }
 
     var body: some View {
         NavigationStack {
@@ -79,21 +64,30 @@ struct PlayerView: View {
                     }
                 }
             }
-            .task {
+            .onAppear {
                 // Wire callback so Chat tab can see the transcript after transcription
                 viewModel.onTranscriptReady = { updatedItem in
                     appState.activeMediaItem = updatedItem
                 }
-                selectedModel = transcriptionService.config.modelName
-                await viewModel.loadMedia(mediaItem)
+                selectedModel = viewModel.transcriptionService.config.modelName
             }
             .sheet(isPresented: $showTranscriptionSettings) {
                 TranscriptionSettingsSheet(
-                    transcriptionService: transcriptionService,
+                    transcriptionService: viewModel.transcriptionService,
                     selectedModel: $selectedModel
                 )
                 .environmentObject(appState)
             }
+        }
+    }
+
+    /// Whether a transcription is actively in progress
+    private var isTranscribing: Bool {
+        switch viewModel.transcriptionState {
+        case .preparing, .extractingAudio, .transcribing:
+            return true
+        default:
+            return false
         }
     }
 
@@ -286,8 +280,10 @@ struct PlayerView: View {
 
             Divider()
 
-            // Content
-            if let transcript = currentItem.transcript {
+            // Content: show progress when transcribing (even during re-transcribe)
+            if isTranscribing {
+                transcriptionPrompt
+            } else if let transcript = currentItem.transcript {
                 TranscriptListView(
                     segments: transcript.segments,
                     activeIndex: viewModel.activeSegmentIndex,

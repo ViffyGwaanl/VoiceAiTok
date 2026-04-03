@@ -38,12 +38,10 @@ struct PlayerContainerView: View {
     @EnvironmentObject var appState: AppState
 
     var body: some View {
-        if let item = appState.activeMediaItem {
+        if let vm = appState.playerViewModel, appState.activeMediaItem != nil {
             PlayerView(
-                mediaItem: item,
-                transcriptionService: appState.transcriptionService,
-                chatService: appState.chatService,
-                mediaLibraryService: appState.mediaLibraryService
+                mediaItem: appState.activeMediaItem!,
+                viewModel: vm
             )
         } else {
             EmptyPlayerView()

@@ -44,7 +44,7 @@ targets:
         CFBundleIconName: AppIcon
         CFBundleDisplayName: VoiceTok
         CFBundleShortVersionString: "1.0.0"
-        CFBundleVersion: "13"
+        CFBundleVersion: "14"
         LSRequiresIPhoneOS: true
         UILaunchScreen:
           UIColorName: AccentColor
@@ -116,7 +116,7 @@ targets:
       properties:
         CFBundleDisplayName: VoiceTok
         CFBundleShortVersionString: "1.0.0"
-        CFBundleVersion: "13"
+        CFBundleVersion: "14"
         NSExtension:
           NSExtensionPointIdentifier: com.apple.share-services
           NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).ShareViewController
