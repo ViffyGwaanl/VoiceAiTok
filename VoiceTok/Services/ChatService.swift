@@ -12,6 +12,10 @@ final class ChatService: ObservableObject {
     @Published var currentStreamText = ""
     private var streamingTask: Task<Void, Never>?
 
+    /// History service for multi-session persistence
+    weak var historyService: ChatHistoryService?
+    private var currentSessionId: UUID?
+
     // MARK: - Configuration
 
     /// Legacy config — now reads from AIProviderService.activeProvider
@@ -57,7 +61,53 @@ final class ChatService: ObservableObject {
         return !service.apiKey(for: provider).isEmpty
     }
 
-    // MARK: - Set Context
+    // MARK: - Session Management
+
+    /// Start a new session, optionally with a transcript context
+    func startNewSession(transcript: Transcript? = nil, mediaItemId: UUID? = nil) {
+        stopGeneration()
+        self.transcript = transcript
+        currentStreamText = ""
+
+        if let transcript {
+            messages = [ChatMessage(role: .system, content: buildSystemContext(transcript))]
+        } else {
+            messages = []
+        }
+
+        // Create a session in history
+        let provName = providerService?.activeProvider?.name
+        let modName = providerService?.activeProvider?.modelName
+        if let history = historyService {
+            let session = history.createSession(
+                mediaItemId: mediaItemId,
+                transcript: transcript,
+                providerName: provName,
+                modelName: modName
+            )
+            currentSessionId = session.id
+        }
+    }
+
+    /// Load an existing session from history
+    func loadSession(_ session: ChatSession) {
+        stopGeneration()
+        currentStreamText = ""
+        messages = session.messages
+        currentSessionId = session.id
+        historyService?.loadSession(session.id)
+    }
+
+    /// Persist current messages to the active session
+    func saveCurrentSession() {
+        guard let id = currentSessionId,
+              var session = historyService?.activeSession ?? historyService?.sessions.first(where: { $0.id == id }) else { return }
+        session.messages = messages
+        session.isCompleted = !isGenerating
+        historyService?.updateSession(session)
+    }
+
+    // MARK: - Set Context (legacy — creates session if none)
     func setTranscript(_ transcript: Transcript) {
         self.transcript = transcript
         messages = [
@@ -66,6 +116,55 @@ final class ChatService: ObservableObject {
                 content: buildSystemContext(transcript)
             )
         ]
+    }
+
+    // MARK: - Edit Message
+    /// Edit a user message at the given index and regenerate from there
+    func editMessage(at messageId: UUID, newContent: String) async {
+        guard let idx = messages.firstIndex(where: { $0.id == messageId }),
+              messages[idx].role == .user else { return }
+
+        // Replace the user message content
+        messages[idx] = ChatMessage(
+            id: messages[idx].id,
+            role: .user,
+            content: newContent,
+            timestamp: messages[idx].timestamp
+        )
+
+        // Remove all messages after this user message
+        let removeFrom = idx + 1
+        if removeFrom < messages.count {
+            messages.removeSubrange(removeFrom...)
+        }
+
+        // Regenerate from the edited message
+        await runStreaming()
+    }
+
+    /// Regenerate from a specific user message (discards everything after it)
+    func regenerateFrom(messageId: UUID) async {
+        guard let idx = messages.firstIndex(where: { $0.id == messageId }) else {
+            // If it's an assistant message, find the preceding user message
+            if let aIdx = messages.firstIndex(where: { $0.id == messageId }),
+               messages[aIdx].role == .assistant {
+                // Remove from this assistant message onwards
+                messages.removeSubrange(aIdx...)
+                await runStreaming()
+            }
+            return
+        }
+
+        // Remove everything after this message
+        let removeFrom = idx + 1
+        if removeFrom < messages.count {
+            messages.removeSubrange(removeFrom...)
+        }
+
+        // If this is a user message, regenerate response
+        if messages[idx].role == .user {
+            await runStreaming()
+        }
     }
 
     private func buildSystemContext(_ transcript: Transcript, maxTokenEstimate: Int = 80_000) -> String {
@@ -110,6 +209,7 @@ final class ChatService: ObservableObject {
     func send(_ userMessage: String) async {
         let userMsg = ChatMessage(role: .user, content: userMessage)
         messages.append(userMsg)
+        saveCurrentSession()
         await runStreaming()
     }
 
@@ -183,7 +283,10 @@ final class ChatService: ObservableObject {
                     }
                 }
             }
-            await MainActor.run { self.isGenerating = false }
+            await MainActor.run {
+                self.isGenerating = false
+                self.saveCurrentSession()
+            }
         }
 
         await streamingTask?.value

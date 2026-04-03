@@ -13,6 +13,7 @@ final class AppState: ObservableObject {
     // MARK: - Services
     let transcriptionService = TranscriptionService()
     let chatService = ChatService()
+    let chatHistoryService = ChatHistoryService()
     let mediaLibraryService = MediaLibraryService()
     let aiProviderService = AIProviderService()
 
@@ -21,8 +22,9 @@ final class AppState: ObservableObject {
     @Published var whisperKitReady = false
 
     init() {
-        // Wire ChatService to AIProviderService
+        // Wire ChatService to AIProviderService and ChatHistoryService
         chatService.providerService = aiProviderService
+        chatService.historyService = chatHistoryService
 
         // Migrate legacy single-provider settings if present
         aiProviderService.migrateFromLegacyIfNeeded()

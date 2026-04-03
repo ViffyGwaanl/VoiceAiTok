@@ -56,11 +56,7 @@ struct ChatContainerView: View {
     @EnvironmentObject var appState: AppState
 
     var body: some View {
-        if appState.activeMediaItem?.transcript != nil {
-            ChatView(chatService: appState.chatService)
-        } else {
-            EmptyChatView()
-        }
+        ChatView(chatService: appState.chatService)
     }
 }
 
