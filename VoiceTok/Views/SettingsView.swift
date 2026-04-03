@@ -171,11 +171,16 @@ struct SettingsView: View {
     }
 
     private func applySettings() {
+        // Apply to service config
         appState.transcriptionService.config.provider = selectedProvider
         appState.transcriptionService.config.modelName = whisperModel
         appState.transcriptionService.config.wordTimestamps = wordTimestamps
         appState.transcriptionService.config.language = transcriptLanguage.isEmpty ? nil : transcriptLanguage
         appState.transcriptionService.config.openAIAPIKey = openAITranscriptionKey.isEmpty ? nil : openAITranscriptionKey
+
+        // Persist to UserDefaults so AppState.syncPersistedSettings() picks them up on next launch
+        UserDefaults.standard.set(selectedProvider.rawValue, forKey: "transcription_provider")
+        UserDefaults.standard.set(openAITranscriptionKey, forKey: "openai_transcription_key")
     }
 
     private func loadSettings() {

@@ -1,6 +1,6 @@
 // ChatView.swift
 // AI conversation interface — inspired by PaperTok Reader
-// Features: copy, regenerate, stop, smart scroll, provider badge, markdown
+// Features: copy, regenerate, stop, smart scroll, provider badge, error guidance
 
 import SwiftUI
 
@@ -12,6 +12,7 @@ struct ChatView: View {
     @State private var showQuickActions = true
     @State private var showSettings = false
     @State private var showClearConfirm = false
+    @State private var pinnedToBottom = true
 
     var body: some View {
         NavigationStack {
@@ -20,7 +21,7 @@ struct ChatView: View {
 
                 Divider()
 
-                if showQuickActions && !chatService.isGenerating {
+                if showQuickActions && !chatService.isGenerating && chatService.hasConfiguredProvider {
                     quickActionsBar
                         .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
@@ -79,14 +80,15 @@ struct ChatView: View {
                         .padding(.vertical, 4)
                     }
 
-                    // Show setup prompt if no provider configured
+                    // Setup prompt if no provider configured
                     if !chatService.hasConfiguredProvider {
                         noProviderPrompt
                     }
 
-                    ForEach(chatService.messages.filter { $0.role != .system }) { message in
+                    ForEach(visibleMessages) { message in
                         ChatBubble(
                             message: message,
+                            isStreaming: chatService.isGenerating && isLastAssistantMessage(message),
                             isLastAssistant: isLastAssistantMessage(message),
                             onCopy: { copyMessage(message) },
                             onRegenerate: { Task { await chatService.regenerate() } }
@@ -94,7 +96,7 @@ struct ChatView: View {
                         .id(message.id)
                     }
 
-                    // Only show typing dots before the first chunk arrives
+                    // Typing dots only before first chunk arrives
                     if chatService.isGenerating && chatService.currentStreamText.isEmpty {
                         TypingIndicator()
                             .id("typing")
@@ -103,19 +105,32 @@ struct ChatView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 8)
             }
+            .onAppear { pinnedToBottom = true }
             .onChange(of: chatService.messages.count) { _, _ in
-                scrollToBottom(proxy)
+                if pinnedToBottom { scrollToBottom(proxy) }
             }
             .onChange(of: chatService.currentStreamText) { _, _ in
-                if chatService.isGenerating, let last = chatService.messages.last {
+                if pinnedToBottom, let last = visibleMessages.last {
                     proxy.scrollTo(last.id, anchor: .bottom)
                 }
             }
+            .simultaneousGesture(
+                DragGesture().onChanged { value in
+                    // User scrolled up → unpin
+                    if value.translation.height > 10 { pinnedToBottom = false }
+                    // User scrolled to bottom → re-pin
+                    if value.translation.height < -10 { pinnedToBottom = true }
+                }
+            )
         }
     }
 
+    private var visibleMessages: [ChatMessage] {
+        chatService.messages.filter { $0.role != .system }
+    }
+
     private func scrollToBottom(_ proxy: ScrollViewProxy) {
-        if let lastMsg = chatService.messages.last {
+        if let lastMsg = visibleMessages.last {
             withAnimation(.easeOut(duration: 0.25)) {
                 proxy.scrollTo(lastMsg.id, anchor: .bottom)
             }
@@ -124,7 +139,7 @@ struct ChatView: View {
 
     private func isLastAssistantMessage(_ message: ChatMessage) -> Bool {
         guard message.role == .assistant else { return false }
-        return chatService.messages.last(where: { $0.role == .assistant })?.id == message.id
+        return visibleMessages.last(where: { $0.role == .assistant })?.id == message.id
     }
 
     private func copyMessage(_ message: ChatMessage) {
@@ -251,7 +266,7 @@ struct ChatView: View {
                             ? Color.secondary : Color.orange
                         )
                 }
-                .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !chatService.hasConfiguredProvider)
             }
         }
         .padding(.horizontal)
@@ -264,6 +279,7 @@ struct ChatView: View {
         guard !text.isEmpty else { return }
         inputText = ""
         isInputFocused = false
+        pinnedToBottom = true
         Task { await chatService.send(text) }
     }
 }
@@ -272,22 +288,24 @@ struct ChatView: View {
 
 struct ChatBubble: View {
     let message: ChatMessage
+    var isStreaming: Bool = false
     var isLastAssistant: Bool = false
     var onCopy: (() -> Void)?
     var onRegenerate: (() -> Void)?
 
     var isUser: Bool { message.role == .user }
+    var isError: Bool { !isUser && message.content.hasPrefix("⚠️") }
 
     var body: some View {
         HStack(alignment: .top, spacing: 8) {
             if isUser { Spacer(minLength: 40) }
 
             if !isUser {
-                Image(systemName: "sparkles")
+                Image(systemName: isError ? "exclamationmark.triangle" : "sparkles")
                     .font(.caption)
-                    .foregroundStyle(.orange)
+                    .foregroundStyle(isError ? .red : .orange)
                     .frame(width: 24, height: 24)
-                    .background(.orange.opacity(0.15))
+                    .background((isError ? Color.red : Color.orange).opacity(0.15))
                     .clipShape(Circle())
             }
 
@@ -297,8 +315,8 @@ struct ChatBubble: View {
                     .textSelection(.enabled)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
-                    .background(isUser ? Color.orange : Color(.systemGray5))
-                    .foregroundColor(isUser ? .white : .primary)
+                    .background(bubbleBackground)
+                    .foregroundColor(isUser ? .white : (isError ? .red : .primary))
                     .clipShape(RoundedRectangle(cornerRadius: 18))
 
                 // Action buttons for AI messages
@@ -308,21 +326,23 @@ struct ChatBubble: View {
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
 
-                        Button(action: { onCopy?() }) {
-                            Image(systemName: "doc.on.doc")
-                                .font(.caption2)
-                        }
-                        .foregroundStyle(.tertiary)
-
-                        if isLastAssistant {
-                            Button(action: { onRegenerate?() }) {
-                                Image(systemName: "arrow.clockwise")
+                        if !isStreaming {
+                            Button(action: { onCopy?() }) {
+                                Image(systemName: "doc.on.doc")
                                     .font(.caption2)
                             }
                             .foregroundStyle(.tertiary)
+
+                            if isLastAssistant {
+                                Button(action: { onRegenerate?() }) {
+                                    Image(systemName: "arrow.clockwise")
+                                        .font(.caption2)
+                                }
+                                .foregroundStyle(.tertiary)
+                            }
                         }
                     }
-                } else {
+                } else if isUser {
                     Text(message.timestamp, style: .time)
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
@@ -332,6 +352,12 @@ struct ChatBubble: View {
             if !isUser { Spacer(minLength: 40) }
         }
         .padding(.vertical, 2)
+    }
+
+    private var bubbleBackground: Color {
+        if isUser { return .orange }
+        if isError { return Color.red.opacity(0.1) }
+        return Color(.systemGray5)
     }
 }
 

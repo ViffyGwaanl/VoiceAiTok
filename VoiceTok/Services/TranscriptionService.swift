@@ -448,11 +448,17 @@ final class TranscriptionService: ObservableObject {
         let recommended = WhisperKit.recommendedModels()
         recommendedModel = recommended.default
 
+        // Populate fallback list immediately so UI can show something before network
+        if availableModels.isEmpty {
+            availableModels = Self.fallbackModels
+            await refreshLocalModelStates()
+        }
+
         do {
             let models = try await WhisperKit.fetchAvailableModels()
             availableModels = models.sorted()
         } catch {
-            availableModels = Self.fallbackModels
+            // Keep the fallback list already set above
         }
 
         await refreshLocalModelStates()

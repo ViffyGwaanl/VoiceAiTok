@@ -27,8 +27,40 @@ final class AppState: ObservableObject {
         // Migrate legacy single-provider settings if present
         aiProviderService.migrateFromLegacyIfNeeded()
 
+        // Sync persisted settings → service config on launch
+        syncPersistedSettings()
+
         Task {
             await prepareWhisperKit()
+        }
+    }
+
+    /// Load @AppStorage-persisted values into service configs.
+    /// This ensures settings survive app restarts without requiring
+    /// the user to open Settings first.
+    private func syncPersistedSettings() {
+        let defaults = UserDefaults.standard
+
+        // Transcription language
+        let lang = defaults.string(forKey: "transcript_language") ?? ""
+        transcriptionService.config.language = lang.isEmpty ? nil : lang
+
+        // Transcription model
+        let model = defaults.string(forKey: "whisper_model") ?? "base"
+        transcriptionService.config.modelName = model
+
+        // Word timestamps
+        transcriptionService.config.wordTimestamps = defaults.object(forKey: "word_timestamps") as? Bool ?? true
+
+        // Transcription provider (persisted as raw string)
+        if let providerRaw = defaults.string(forKey: "transcription_provider"),
+           let provider = TranscriptionProvider(rawValue: providerRaw) {
+            transcriptionService.config.provider = provider
+        }
+
+        // OpenAI transcription API key
+        if let key = defaults.string(forKey: "openai_transcription_key"), !key.isEmpty {
+            transcriptionService.config.openAIAPIKey = key
         }
     }
 

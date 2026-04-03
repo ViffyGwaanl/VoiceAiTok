@@ -34,6 +34,18 @@ final class PlayerViewModel: ObservableObject {
         self.chatService = chatService
         self.mediaLibraryService = mediaLibraryService
         setupTimeTracking()
+        setupStateForwarding()
+    }
+
+    // MARK: - State Forwarding (one-time setup, throttled)
+    private func setupStateForwarding() {
+        transcriptionService.$state
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] newState in
+                self?.transcriptionState = newState
+            }
+            .store(in: &cancellables)
     }
 
     // MARK: - Load Media
@@ -64,13 +76,8 @@ final class PlayerViewModel: ObservableObject {
             return
         }
 
-        transcriptionState = .preparing
-
-        // Forward state from service
-        transcriptionService.$state
-            .receive(on: DispatchQueue.main)
-            .assign(to: &$transcriptionState)
-
+        // State forwarding is already set up in init — just start transcribing.
+        // The service will set state to .preparing → .extractingAudio → .transcribing → .completed
         do {
             let transcript = try await transcriptionService.transcribeMedia(at: url)
 
@@ -84,7 +91,6 @@ final class PlayerViewModel: ObservableObject {
 
             // Set up chat context
             chatService.setTranscript(transcript)
-            transcriptionState = .completed
 
             // Notify caller (PlayerView) so it can update AppState for the Chat tab
             onTranscriptReady?(updatedItem)
