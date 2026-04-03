@@ -13,7 +13,7 @@
 		520F3496B7B28D0292B964CE /* PlayerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1125CBDBC6932DEB5B407640 /* PlayerViewModel.swift */; };
 		546B5F668C747AA88ADAB9AB /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76EC243C68D0836A73ACFD36 /* ChatView.swift */; };
 		5CA3A5791AC2F68DC3EC038C /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3E94A12459E1DBCA690FBADB /* PlayerView.swift */; };
-		5E28063F241B500920F610DE /* VoiceTokShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B0BF995600F161033A1E8316 /* VoiceTokShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		5E28063F241B500920F610DE /* VoiceTokShare.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; platformFilter = ios; fileRef = B0BF995600F161033A1E8316 /* VoiceTokShare.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5F3FDF6EEE064061B64CCD1E /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 34CB6366BD3C7008AE03764A /* Localizable.strings */; };
 		6B6D76E7CA10840DF7153CA1 /* MediaItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = 16ACB3E1C97DB4E38FF3D8FB /* MediaItem.swift */; };
 		6E1FD0C63547C7F525A9117D /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CFC610CDFA03EE2562E99C3 /* AppState.swift */; };
@@ -492,6 +492,7 @@
 				CODE_SIGN_ENTITLEMENTS = VoiceTok/Entitlements/VoiceTok.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
 				DEVELOPMENT_TEAM = 3LJ45MFB74;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = VoiceTok/Resources/Info.plist;
@@ -503,7 +504,7 @@
 				OTHER_LINKER_FLAGS = "-ObjC $(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.voicetok.app;
 				SDKROOT = iphoneos;
-				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -537,6 +538,7 @@
 				CODE_SIGN_ENTITLEMENTS = VoiceTok/Entitlements/VoiceTok.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
+				DERIVE_MACCATALYST_PRODUCT_BUNDLE_IDENTIFIER = NO;
 				DEVELOPMENT_TEAM = 3LJ45MFB74;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = VoiceTok/Resources/Info.plist;
@@ -548,7 +550,7 @@
 				OTHER_LINKER_FLAGS = "-ObjC $(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = com.voicetok.app;
 				SDKROOT = iphoneos;
-				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MACCATALYST = YES;
 				SWIFT_VERSION = 5.9;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

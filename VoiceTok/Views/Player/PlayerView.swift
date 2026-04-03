@@ -382,8 +382,12 @@ struct PlayerView: View {
         try? text.write(to: url, atomically: true, encoding: .utf8)
 
         let activityVC = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+        // Configure popover for iPad / Mac Catalyst
+        activityVC.popoverPresentationController?.sourceView = UIView()
+
         if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let root = scene.windows.first?.rootViewController {
+            activityVC.popoverPresentationController?.sourceRect = CGRect(x: root.view.bounds.midX, y: root.view.bounds.midY, width: 0, height: 0)
             root.present(activityVC, animated: true)
         }
     }
