@@ -204,10 +204,10 @@ final class TranscriptionService: ObservableObject {
             throw TranscriptionError.recognizerUnavailable
         }
 
-        // SFSpeechRecognizer can't handle all media formats — extract audio first
+        // SFSpeechRecognizer needs audio in a format it supports (M4A/CAF at native rate).
+        // Raw media files (MP4 video, odd codecs) cause error 1107.
         state = .extractingAudio
-        let asset = AVURLAsset(url: mediaURL)
-        let audioURL = try await extractAudio(from: asset)
+        let audioURL = try await extractAudioForSpeech(from: mediaURL)
 
         state = .transcribing(progress: 0.0)
 
@@ -340,7 +340,41 @@ final class TranscriptionService: ObservableObject {
         return transcript
     }
 
-    // MARK: - Audio Extraction (shared)
+    // MARK: - Audio Extraction for Apple Speech (M4A at native rate)
+
+    /// Extract audio to M4A (AAC) at the source sample rate — the format SFSpeechRecognizer
+    /// handles best. Different from the WhisperKit path which needs 16kHz mono WAV.
+    private func extractAudioForSpeech(from mediaURL: URL) async throws -> URL {
+        let asset = AVURLAsset(url: mediaURL)
+        let outputURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString)
+            .appendingPathExtension("m4a")
+
+        let audioTracks = try await asset.loadTracks(withMediaType: .audio)
+        guard !audioTracks.isEmpty else {
+            throw TranscriptionError.noAudioTrack
+        }
+
+        // Use AVAssetExportSession — it handles codec transcoding automatically and
+        // produces M4A files that SFSpeechRecognizer accepts without error 1107.
+        guard let exportSession = AVAssetExportSession(asset: asset, presetName: AVAssetExportPresetAppleM4A) else {
+            throw TranscriptionError.audioExtractionFailed
+        }
+        exportSession.outputURL = outputURL
+        exportSession.outputFileType = .m4a
+
+        await exportSession.export()
+
+        guard exportSession.status == .completed else {
+            let msg = exportSession.error?.localizedDescription ?? "export failed"
+            print("[TranscriptionService] M4A export failed: \(msg)")
+            throw TranscriptionError.audioExtractionFailed
+        }
+
+        return outputURL
+    }
+
+    // MARK: - Audio Extraction for WhisperKit (16kHz mono WAV)
 
     private func extractAudio(from asset: AVURLAsset) async throws -> URL {
         let outputURL = FileManager.default.temporaryDirectory

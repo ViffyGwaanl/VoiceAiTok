@@ -68,6 +68,43 @@ struct SettingsView: View {
 
                         Toggle("Word-level Timestamps", isOn: $wordTimestamps)
                     }
+
+                    // Downloaded models quick view
+                    Section("Downloaded Models") {
+                        let downloaded = appState.transcriptionService.localModelStates
+                            .filter { $0.value == .downloaded }
+                            .map(\.key)
+                            .sorted()
+                        if downloaded.isEmpty {
+                            HStack {
+                                Image(systemName: "arrow.down.circle.dotted")
+                                    .foregroundStyle(.secondary)
+                                Text("No models downloaded yet. Tap \"Model\" above to download.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        } else {
+                            ForEach(downloaded, id: \.self) { model in
+                                HStack {
+                                    Image(systemName: whisperModel == model
+                                          ? "checkmark.circle.fill" : "circle")
+                                        .foregroundStyle(whisperModel == model ? .green : .secondary)
+                                        .font(.subheadline)
+                                    Text(model)
+                                        .font(.subheadline)
+                                    Spacer()
+                                    Text(TranscriptionService.estimatedSize(for: model))
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    whisperModel = model
+                                    appState.transcriptionService.config.modelName = model
+                                }
+                            }
+                        }
+                    }
                 }
 
                 // Apple Speech info
@@ -167,6 +204,13 @@ struct SettingsView: View {
                 }
             }
             .onAppear { loadSettings() }
+            .task {
+                // Populate model download states so the Downloaded Models list shows correctly
+                if appState.transcriptionService.availableModels.isEmpty {
+                    appState.transcriptionService.availableModels = TranscriptionService.fallbackModels
+                }
+                await appState.transcriptionService.refreshLocalModelStates()
+            }
         }
     }
 
